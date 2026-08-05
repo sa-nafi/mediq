@@ -48,7 +48,7 @@ through role-protected endpoints (e.g. `POST /doctors`, `POST /employees`).
 All tables and relationships, as actually defined in `001_schema.sql`:
 
 ```
-Users (user_id PK, email, password_hash, role, is_active, created_at)
+Users (user_id PK, public_id UNIQUE, email, password_hash, role, is_active, created_at)
   role CHECK IN ('patient','doctor','lab_tech','receptionist','admin')
 
 Departments (department_id PK, department_name, description)
@@ -170,7 +170,7 @@ backend/
 │   │   ├── doctor.go
 │   │   ├── appointment.go
 │   │   ├── medical_record.go
-│   │   ├── test.go
+│   │   ├── medical_test.go
 │   │   ├── medicine.go
 │   │   ├── prescription.go       # holds BOTH Prescription and PrescriptionItem structs
 │   │   └── audit_log.go
@@ -182,7 +182,7 @@ backend/
 │   │   ├── doctor.go
 │   │   ├── appointment.go        # calls book_appointment(), cancel_appointment()
 │   │   ├── medical_record.go
-│   │   ├── test.go                # calls complete_test(); MUST verify performed_by role='lab_tech'
+│   │   ├── medical_test.go                # calls complete_test(); MUST verify performed_by role='lab_tech'
 │   │   ├── medicine.go
 │   │   ├── prescription.go        # calls create_prescription_with_items()
 │   │   └── audit.go               # reads Audit_Log only, no writes
@@ -194,7 +194,7 @@ backend/
 │   │   ├── doctor.go
 │   │   ├── appointment.go
 │   │   ├── medical_record.go
-│   │   ├── test.go                # doctor orders, lab_tech completes
+│   │   ├── medical_test.go                # doctor orders, lab_tech completes
 │   │   ├── medicine.go
 │   │   ├── prescription.go
 │   │   ├── admin.go               # audit log viewing, admin-only aggregate endpoints

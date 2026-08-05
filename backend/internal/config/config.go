@@ -21,6 +21,8 @@ type Config struct {
 	DBMinConns        string
 	DBMaxConnLifetime string
 	DBMaxConnIdleTime string
+	JWTSecret         string
+	CORSAllowedOrigin string
 }
 
 // Load loads configuration from environment variables, optionally reading from a .env file first.
@@ -45,6 +47,8 @@ func Load() (*Config, error) {
 		DBMinConns:        getEnv("DB_MIN_CONNS", "2"),
 		DBMaxConnLifetime: getEnv("DB_MAX_CONN_LIFETIME", "1h"),
 		DBMaxConnIdleTime: getEnv("DB_MAX_CONN_IDLE_TIME", "30m"),
+		JWTSecret:         getEnv("JWT_SECRET", ""),
+		CORSAllowedOrigin: getEnv("ALLOWED_ORIGIN", "http://localhost:5173"),
 	}
 
 	if err := validate(cfg); err != nil {
@@ -72,6 +76,12 @@ func validate(cfg *Config) error {
 	}
 	if cfg.DBName == "" {
 		missing = append(missing, "DB_NAME")
+	}
+	if cfg.JWTSecret == "" {
+		missing = append(missing, "JWT_SECRET")
+	}
+	if cfg.CORSAllowedOrigin == "" {
+		missing = append(missing, "ALLOWED_ORIGIN")
 	}
 
 	if len(missing) > 0 {
