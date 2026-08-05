@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/url"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sa-nafi/mediq/backend/internal/config"
 )
@@ -56,4 +57,19 @@ func NewPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
 	slog.Info("Successfully connected to database")
 
 	return pool, nil
+}
+
+// txKey is a custom type to avoid context key collisions.
+type txKey struct{}
+
+// WithTx returns a new context with the given pgx.Tx attached.
+func WithTx(ctx context.Context, tx pgx.Tx) context.Context {
+	return context.WithValue(ctx, txKey{}, tx)
+}
+
+// TxFromContext retrieves a pgx.Tx from the context if it exists.
+// It returns nil if no transaction is found.
+func TxFromContext(ctx context.Context) pgx.Tx {
+	tx, _ := ctx.Value(txKey{}).(pgx.Tx)
+	return tx
 }

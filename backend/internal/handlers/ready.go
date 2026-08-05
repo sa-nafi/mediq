@@ -24,7 +24,7 @@ func ReadyHandler(pool *pgxpool.Pool) http.HandlerFunc {
 			slog.Error("Readiness check failed", "error", err)
 			w.WriteHeader(http.StatusServiceUnavailable)
 			response := ReadyResponse{
-				Status: "ok",
+				Status: "error",
 				Checks: map[string]string{
 					"postgres": "unavailable",
 				},

@@ -12,6 +12,7 @@ import (
 
 	"github.com/sa-nafi/mediq/backend/internal/config"
 	"github.com/sa-nafi/mediq/backend/internal/db"
+	"github.com/sa-nafi/mediq/backend/internal/middleware"
 	"github.com/sa-nafi/mediq/backend/internal/router"
 )
 
@@ -45,13 +46,13 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Register routes
-	router.RegisterRoutes(mux, dbPool)
+	router.RegisterRoutes(mux, dbPool, cfg)
 
 	// Configure server
 	addr := ":" + cfg.ServerPort
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           mux,
+		Handler:           middleware.CORS(cfg.CORSAllowedOrigin)(mux),
 		ReadTimeout:       5 * time.Second,
 		ReadHeaderTimeout: 2 * time.Second,
 		WriteTimeout:      10 * time.Second,

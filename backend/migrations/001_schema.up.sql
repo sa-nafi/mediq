@@ -8,6 +8,7 @@
 -- ---------------------------------------------------------------------
 CREATE TABLE Users (
     user_id         SERIAL PRIMARY KEY,
+    public_id       UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE,
     email           VARCHAR(150) NOT NULL UNIQUE,
     password_hash   VARCHAR(255) NOT NULL,
     role            VARCHAR(20)  NOT NULL
@@ -180,9 +181,16 @@ CREATE TABLE Audit_Log (
 -- =====================================================================
 CREATE INDEX idx_appointments_patient      ON Appointments(patient_id);
 CREATE INDEX idx_appointments_doctor_date  ON Appointments(doctor_id, appointment_date);
+CREATE INDEX idx_employees_department      ON Employees(department_id);
 CREATE INDEX idx_medical_records_patient   ON Medical_Records(patient_id);
+CREATE INDEX idx_medical_records_doctor    ON Medical_Records(doctor_id);
+CREATE INDEX idx_medical_records_appt      ON Medical_Records(appointment_id);
 CREATE INDEX idx_tests_patient             ON Medical_Tests(patient_id);
 CREATE INDEX idx_tests_status              ON Medical_Tests(status);
 CREATE INDEX idx_tests_performed_by        ON Medical_Tests(performed_by);
+CREATE INDEX idx_tests_doctor              ON Medical_Tests(doctor_id);
+CREATE INDEX idx_tests_appt                ON Medical_Tests(appointment_id);
 CREATE INDEX idx_prescription_items_rx     ON Prescription_Items(prescription_id);
+CREATE INDEX idx_prescriptions_record      ON Prescriptions(record_id);
+CREATE INDEX idx_prescriptions_doctor      ON Prescriptions(doctor_id);
 CREATE INDEX idx_audit_log_table_record    ON Audit_Log(table_name, record_id);
