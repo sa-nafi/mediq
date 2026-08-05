@@ -1,38 +1,95 @@
-# MedIQ Backend
+# MediQ Backend
 
-MedIQ is a comprehensive hospital management system backend built with Go and PostgreSQL. It relies entirely on standard library routing (Go 1.22+) and raw SQL via `pgx` to keep dependencies minimal and performance high.
+MediQ is a comprehensive hospital management system backend built with Go and PostgreSQL. It relies entirely on standard library routing (Go 1.22+) and raw SQL via `pgx` to keep dependencies minimal and performance high.
 
-## Prerequisites
-- Go 1.22 or higher
-- PostgreSQL 15 or higher
+*(For local development startup instructions, please see the [main README](../README.md).)*
 
-## Setup Instructions
+## API Specifications
 
-1. **Environment Variables**
-   Create a `.env` file in the root directory (or ensure it exists). It should contain at minimum:
-   ```env
-   SERVER_PORT=8080
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_USER=postgres
-   DB_PASSWORD=postgres
-   DB_NAME=mediq_db
-   JWT_SECRET=your_super_secret_key_here
-   ```
+The following endpoints are currently implemented and exposed by the backend.
 
-2. **Database Setup & Migrations**
-   Make sure your PostgreSQL server is running and the database specified in `.env` exists. Then, run the migration tool to set up the schema and tables:
-   ```bash
-   go run cmd/migrate/main.go up
-   ```
-   *(To rollback migrations, you can run `go run cmd/migrate/main.go down`)*
+### System & Health
 
-3. **Running the Server**
-   To start the backend server:
-   ```bash
-   go run cmd/server/main.go
-   ```
-   The server will start on the port specified in your `.env` file (default `8080`).
+#### `GET /api/health`
+Checks if the HTTP server is running.
+- **Auth Required**: No
+- **Response**: `200 OK` (plain text or JSON indicating service is alive)
+
+#### `GET /api/ready`
+Checks if the application is fully ready to accept traffic, including database connectivity.
+- **Auth Required**: No
+- **Response**: `200 OK` (if DB is connected), `503 Service Unavailable` otherwise.
+
+---
+
+### Authentication
+
+#### `POST /api/auth/register`
+Registers a new patient in the system.
+- **Auth Required**: No
+- **Request Body**:
+  ```json
+  {
+      "email": "user@example.com",
+      "password": "strongpassword",
+      "first_name": "John",
+      "last_name": "Doe",
+      "date_of_birth": "1990-01-01",
+      "gender": "M",          // optional
+      "blood_type": "O+",     // optional
+      "phone": "1234567890",  // optional
+      "address": "123 Main"   // optional
+  }
+  ```
+- **Response**: `201 Created`
+
+#### `POST /api/auth/login`
+Authenticates a user and issues JWT access and refresh tokens.
+- **Auth Required**: No
+- **Request Body**:
+  ```json
+  {
+      "email": "user@example.com",
+      "password": "strongpassword"
+  }
+  ```
+- **Response**: `200 OK`
+  ```json
+  {
+      "access_token": "eyJhbG...",
+      "refresh_token": "eyJhbG..."
+  }
+  ```
+
+#### `POST /api/auth/refresh`
+Issues a new access token and rotates the refresh token using a valid, unexpired refresh token.
+- **Auth Required**: No (but requires a valid refresh token in the body)
+- **Request Body**:
+  ```json
+  {
+      "refresh_token": "eyJhbG..."
+  }
+  ```
+- **Response**: `200 OK`
+  ```json
+  {
+      "access_token": "eyJhbG...",
+      "refresh_token": "eyJhbG..."
+  }
+  ```
+
+#### `POST /api/auth/logout`
+Logs the user out by revoking their active refresh token in the database.
+- **Auth Required**: Yes (Bearer Token)
+- **Request Body**:
+  ```json
+  {
+      "refresh_token": "eyJhbG..."
+  }
+  ```
+- **Response**: `200 OK`
+
+---
 
 ## Maintenance Notes
 **Refresh Tokens:** The application tracks issued refresh tokens in the `Refresh_Tokens` table for stateful rotation and revocation. Over time, expired tokens will accumulate. It is recommended to occasionally run a cleanup job to delete expired rows:
