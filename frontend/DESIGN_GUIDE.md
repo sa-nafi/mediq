@@ -1,64 +1,112 @@
-# UI Design System & Guidelines
+# Frontend Guide - Diagnostic Center Management System
 
-This document outlines the UI principles, styling tokens, and component architecture for this web application. It serves as a context file for AI agents and developers building out additional features or generating new web applications with a cohesive look and feel.
+## 1. Project Overview
+This document serves as the primary frontend UI/UX and architectural guideline for the Diagnostic Center WebApp. It is tailored to be consumed by an AI coding agent to ensure consistency in component creation, state management, and overall design language.
 
-## Design Foundations
+The design language is heavily inspired by the reference landing page: `/docs/mockup.webp`.
 
-### Theme & Aesthetic
-- **Style**: Minimalist, high-contrast, Vercel/Linear-inspired.
-- **Vibe**: Professional, clean, and highly legible. The aesthetic relies heavily on whitespace, subtle borders, and a monochromatic palette to convey a premium feel.
+### Core User Roles
+1. **Patient**: Books appointments, views reports, views prescriptions.
+2. **Receptionist**: Manages appointments and queues.
+3. **Doctor**: Consults, creates records, prescribes medicines, orders tests.
+4. **Lab Technician**: Views test orders, uploads diagnostic results.
 
-### Color System
-The color system relies exclusively on the **OKLCH** color space to maintain perceptual uniformity. It uses a strictly neutral/monochrome palette (Zinc/Grayscale) with semantic colors used extremely sparingly.
+---
 
-**Light Mode (Root)**
-- `background`: Pure white (`oklch(1 0 0)`)
-- `foreground`: Near black (`oklch(0.145 0 0)`)
-- `card` & `popover`: Pure white (`oklch(1 0 0)`)
-- `primary`: Very dark gray (`oklch(0.205 0 0)`)
-- `secondary` / `muted` / `accent`: Very light gray (`oklch(0.97 0 0)`)
-- `border` / `input`: Light gray (`oklch(0.922 0 0)`)
+## 2. Tech Stack & Library Usage
+- **Framework**: React + Vite + TypeScript
+- **Styling**: Tailwind CSS v4
+- **Component Library**: shadcn/ui
+- **Icons**: lucide-react
+- **Forms**: react-hook-form + zod (Strict validation for medical data)
+- **Data Fetching**: tanstack-query (React Query) against the Go API
+- **Tables**: tanstack-table (Essential for staff-facing lists like Patient Queue, Lab Orders)
+- **Charts**: recharts (Admin/Management Dashboard analytics)
+- **Dates**: dayjs (Appointment scheduling, DOBs, report timestamps)
+- **Notifications**: sonner (Toast notifications for actions like "Test Result Uploaded")
+- **State Management**: zustand (For client state: Sidebar toggles, active patient context)
+- **HTTP Client**: axios
+- **Animations**: framer-motion (Page transitions, modal popups, toast entry)
 
-*Accessibility Note: Background/foreground pairings maintain at least a 4.5:1 contrast ratio to ensure WCAG AA compliance.*
+---
 
-### Typography System
-- **Primary Font**: `Geist` (`@fontsource-variable/geist`). Used for both headings and body text.
-- **Font Stack**: `"Geist", system-ui, sans-serif`
-- **Characteristics**: Use tight tracking (`tracking-tight`) for headings to enhance the modern feel. Body text should prioritize legibility.
+## 3. Design System & Theme
 
-### Spacing & Borders
-- **Radius**: Base radius is `0.625rem` (10px). Corners are slightly rounded but not pill-shaped.
-- **Borders**: Highly dependent on subtle borders (`border-border`) rather than deep shadows to separate content areas. 
-- **Shadows**: Keep shadows minimal and crisp; rely on border definitions for structural layout.
+Based on the reference image the design system should adopt a clean, modern, and trustworthy medical aesthetic.
 
-## Component Architecture
+### 3.1 Color Palette (Tailwind v4 Configuration Target)
+The theme relies on deep teals, vibrant cyan, and a warm yellow accent to create a "healing yet professional" environment.
 
-### Base Components (Shadcn UI)
-The project utilizes **shadcn/ui** configured with the `base-nova` style and a `neutral` base color. 
-- **Do not build primitives from scratch**. Use the pre-configured components in `@/components/ui`.
-- **Icons**: Use `lucide-react`. Ensure icons maintain consistent stroke widths and sizing relative to text.
+*   **Primary (Teal/Dark Blue)**: `#0d4750` (Used for footer, dark bento-box cards, major headings)
+*   **Secondary (Vibrant Cyan)**: `#1c96a3` (Used for primary buttons, highlights, active states)
+*   **Accent (Warm Yellow)**: `#ffb703` (Used for CTAs like "Book Appointment", rating stars)
+*   **Background (Light Blue-Gray)**: `#f4f8fa` (Used for the main app background to reduce eye strain compared to pure white)
+*   **Surface (White)**: `#ffffff` (Used for cards, modals, table backgrounds)
+*   **Text/Foreground**:
+    *   Dark: `#1a202c` (Body text)
+    *   Muted: `#64748b` (Secondary text, subtitles)
 
-### Layout Patterns
-- **Containers**: Center-aligned containers with generous max-widths.
-- **Algorithm/Data Layouts**: Favor two-column layouts on desktop (e.g., configurations on the left sidebar, results/visualizations on the right main pane).
-- **Responsive Behavior**: Use Tailwind's default breakpoints (`sm:`, `md:`, `lg:`). Stack columns vertically on mobile screens.
+### 3.2 Typography
+*   **Font Family**: A clean Sans-Serif like `Plus Jakarta Sans` or `Inter`.
+*   **Headings**: Bold, well-spaced. (e.g., `text-3xl font-bold text-primary`)
+*   **Body**: Highly readable, `text-base text-gray-700`.
 
-### Animation & Interaction
-- **Micro-interactions**: Use `framer-motion` for subtle animations (e.g., page transitions, disclosing new results). 
-- **Transitions**: Keep animations fast and purposeful. Use `opacity` fades and slight `y` offsets (`translate-y`) rather than extreme scaling or bouncing.
-- **States**: Provide clear visual feedback for `hover`, `active`, `focus`, and `disabled` states using the accent and muted color tokens.
+### 3.3 UI Characteristics (shadcn/ui overrides)
+*   **Border Radius**: The reference design heavily features rounded corners.
+    *   Cards/Images: `rounded-2xl` or `rounded-3xl`
+    *   Buttons: `rounded-full` (Pill shape)
+    *   Inputs: `rounded-full` for search bars, `rounded-xl` for standard forms.
+*   **Shadows**: Soft, diffused shadows (`shadow-sm` and `shadow-md` with slight blue/teal tint).
+*   **Layout Style**: "Bento Box" grids for dashboards and feature lists, large generous padding (`p-6` to `p-8` on cards).
 
-## Tech Stack & Tooling
+---
 
-- **CSS Framework**: Tailwind CSS v4.
-- **Token Management**: CSS Variables defined in `index.css` under `:root` and `.dark` selectors.
-- **Routing**: React Router DOM. Use `<Suspense>` wrapping for heavy pages.
-- **Other Libraries**: `sonner` for notifications, `tanstack-query` for data fetching, `react-hook-form` for form handling, `zod` for schema validation, `shadcn/ui` for components, `lucide-react` for icons, `framer-motion` for animations, `axios` for http requests, `dayjs` for date formatting, `recharts` for charts, `tanstack-table` for tables, `zustand` for state management. [Install and use them only when necessary]
+## 4. Architecture & State Strategy
 
-## Instructions for AI Agents
-When generating new code or apps based on this guideline:
-1. **Never use generic vibrant colors** (red, blue, green) unless it is a specific semantic requirement (e.g., error text). Stick strictly to the neutral/zinc palette.
-2. **Prioritize layout alignment**. Ensure padding and margins match flawlessly across adjacent components.
-3. **Always use Geist**. Do not fall back to standard browser fonts or other Google fonts unless explicitly requested.
-4. **Use Shadcn components**. If an interactive element is needed (dropdown, table, button, input), import it from the existing `ui` folder.
-5. **Ensure Dark Mode compatibility**. All custom components must include `dark:` variant classes if they don't use standard foreground/background semantic variables.
+### 4.1 Folder Structure Standard
+```text
+src/
+├── assets/         # Static images, icons
+├── components/     # shadcn components, shared UI (buttons, cards)
+├── features/       # Feature-based modules (appointments, consultations, lab)
+│   ├── appointments/
+│   │   ├── components/
+│   │   ├── hooks/      # tanstack-query hooks (e.g., useAppointments.ts)
+│   │   ├── store/      # local zustand slices if needed
+│   │   └── schema.ts   # zod schemas
+├── layouts/        # PatientLayout, StaffLayout (Sidebar vs Topbar)
+├── lib/            # axios instance, dayjs config, utils (cn)
+├── pages/          # Route components mapping to features
+└── store/          # Global zustand store (auth state, global UI state)
+```
+
+### 4.2 Data Fetching (Tanstack Query)
+*   Keep queries modularized inside `/features/{domain}/hooks`.
+*   Always use descriptive query keys: `['appointments', 'list', { date, doctorId }]`.
+*   Handle global errors (e.g., 401 Unauthorized) via Axios interceptors.
+
+### 4.3 Form Handling
+*   Use `react-hook-form` connected to `zod`.
+*   Create a reusable `<FormInput />` component wrapping shadcn's `<FormItem>`.
+*   Medical data (prescriptions) requires array fields (`useFieldArray`) for adding multiple medicines dynamically.
+
+---
+
+## 5. View Layouts & Flows
+
+### 5.1 Patient Portal (B2C Interface)
+*   **Navigation**: Top Navigation Bar (Logo left, Links center, Profile/CTA right).
+*   **Dashboard**:
+    *   Upcoming Appointment Card.
+    *   Quick actions: "Book New", "View Last Report".
+*   **Look & Feel**: Mirrors the uploaded landing page closely (friendly, spacious).
+
+### 5.2 Staff Portal (B2B Interface - Receptionist, Doctor, Lab Tech)
+*   **Navigation**: Collapsible Left Sidebar (using `lucide-react` icons).
+*   **Dashboard**: Data-dense but clean.
+    *   **Receptionist**: View of today's schedule (`dayjs` + `tanstack-table`), status toggles (Arrived, Consulting, Done).
+    *   **Doctor**: Active patient context. Split screen: History on left, Current Consultation (Notes, Rx, Lab Order) on right.
+    *   **Lab Tech**: Table of pending lab orders. Clicking opens an upload modal (Dropzone for PDFs + manual entry for values).
+*   **Look & Feel**: Slightly more utilitarian than the patient portal but retains the color palette (cyan active states, rounded corners on panels).
+
+---

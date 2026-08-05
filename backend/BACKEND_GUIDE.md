@@ -1,7 +1,7 @@
-# Diagnostic Center Management System — Project Context [Backend]
+# Backend Guide - Diagnostic Center Management System
 
 University DBMS lab course project. This document is the single source of
-truth for the project's design decisions. Use it as context when writing
+truth for the project's backend design decisions. Use it as context when writing
 backend code.
 
 ## Tech Stack
