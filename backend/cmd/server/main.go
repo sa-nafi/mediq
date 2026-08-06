@@ -35,7 +35,7 @@ func main() {
 	// Initialize database pool
 	dbCtx, dbCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer dbCancel()
-	
+
 	dbPool, err := db.NewPool(dbCtx, cfg)
 	if err != nil {
 		slog.Error("Failed to initialize database", "error", err)
@@ -83,7 +83,7 @@ func main() {
 		slog.Error("Server shutdown failed", "error", err)
 		os.Exit(1)
 	}
-	
+
 	slog.Info("Closing database pool...")
 	dbPool.Close()
 

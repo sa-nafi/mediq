@@ -113,7 +113,7 @@ func main() {
 			slog.Error("Invalid version number", "provided", versionStr)
 			os.Exit(1)
 		}
-		
+
 		if err := migrator.Force(version); err != nil {
 			slog.Error("Failed to force migration version", "error", err)
 			os.Exit(1)
