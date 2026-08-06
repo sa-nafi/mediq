@@ -26,6 +26,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	doctorHandler := handlers.NewDoctorHandler(doctorRepo)
 	departmentHandler := handlers.NewDepartmentHandler(departmentRepo)
 	medicineHandler := handlers.NewMedicineHandler(medicineRepo)
+	patientHandler := handlers.NewPatientHandler(patientRepo)
 
 	// Middlewares
 	txMw := middleware.TransactionMiddleware(dbPool)
@@ -47,6 +48,17 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	adminMw := middleware.RequireRole("admin")
 	adminAuthTx := func(h http.HandlerFunc) http.Handler {
 		return authMw(adminMw(txMw(http.HandlerFunc(h))))
+	}
+
+	// Role-specific auth wrappers
+	patientStaffAuthTx := func(h http.HandlerFunc) http.Handler {
+		return authMw(middleware.RequireRole("patient", "doctor", "receptionist", "admin")(txMw(http.HandlerFunc(h))))
+	}
+	receptionistDoctorAdminAuthTx := func(h http.HandlerFunc) http.Handler {
+		return authMw(middleware.RequireRole("receptionist", "doctor", "admin")(txMw(http.HandlerFunc(h))))
+	}
+	patientAdminAuthTx := func(h http.HandlerFunc) http.Handler {
+		return authMw(middleware.RequireRole("patient", "admin")(txMw(http.HandlerFunc(h))))
 	}
 
 	// Employee Routes
@@ -83,4 +95,9 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	mux.Handle("GET /api/medicines/{id}", adminAuthTx(medicineHandler.GetMedicineByIDHandler))
 	mux.Handle("PUT /api/medicines/{id}", adminAuthTx(medicineHandler.UpdateMedicineHandler))
 	mux.Handle("DELETE /api/medicines/{id}", adminAuthTx(medicineHandler.DeleteMedicineHandler))
+
+	// Patient Routes
+	mux.Handle("GET /api/patients", receptionistDoctorAdminAuthTx(patientHandler.GetPatientsHandler))
+	mux.Handle("GET /api/patients/{id}", patientStaffAuthTx(patientHandler.GetPatientByIDHandler))
+	mux.Handle("PUT /api/patients/{id}", patientAdminAuthTx(patientHandler.UpdatePatientHandler))
 }
