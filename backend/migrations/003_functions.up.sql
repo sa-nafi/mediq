@@ -12,24 +12,13 @@ CREATE OR REPLACE FUNCTION book_appointment(
     p_patient_id     INT,
     p_doctor_id      INT,
     p_appointment_date DATE,
-    p_appointment_time TIME,
     p_reason         TEXT
 ) RETURNS INT AS $$
 DECLARE
     v_appointment_id INT;
 BEGIN
-    IF EXISTS (
-        SELECT 1 FROM Appointments
-        WHERE doctor_id = p_doctor_id
-          AND appointment_date = p_appointment_date
-          AND appointment_time = p_appointment_time
-          AND status = 'scheduled'
-    ) THEN
-        RAISE EXCEPTION 'Doctor % is already booked at % %', p_doctor_id, p_appointment_date, p_appointment_time;
-    END IF;
-
-    INSERT INTO Appointments (patient_id, doctor_id, appointment_date, appointment_time, reason, status)
-    VALUES (p_patient_id, p_doctor_id, p_appointment_date, p_appointment_time, p_reason, 'scheduled')
+    INSERT INTO Appointments (patient_id, doctor_id, appointment_date, reason, status)
+    VALUES (p_patient_id, p_doctor_id, p_appointment_date, p_reason, 'scheduled')
     RETURNING appointment_id INTO v_appointment_id;
 
     RETURN v_appointment_id;
@@ -126,5 +115,52 @@ BEGIN
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Test % not found or already completed/cancelled', p_test_id;
     END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ---------------------------------------------------------------------
+-- assign_appointment_serial
+-- Calculates the serial number and checks schedule/leave before insert
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION assign_appointment_serial() RETURNS TRIGGER AS $$
+DECLARE
+    v_max_patients INT;
+    v_current_serial INT;
+BEGIN
+    -- 1. Check if the doctor is on leave
+    IF EXISTS (
+        SELECT 1 FROM Doctor_Leaves 
+        WHERE doctor_id = NEW.doctor_id 
+          AND leave_date = NEW.appointment_date
+    ) THEN
+        RAISE EXCEPTION 'Doctor is on leave on this date';
+    END IF;
+
+    -- 2. Check schedule and capacity
+    -- EXTRACT(DOW FROM date) returns 0-6 (0=Sunday)
+    SELECT max_patients INTO v_max_patients
+    FROM Doctor_Schedules
+    WHERE doctor_id = NEW.doctor_id
+      AND day_of_week = EXTRACT(DOW FROM NEW.appointment_date)::INT
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Doctor does not consult on this day of the week';
+    END IF;
+
+    -- 3. Calculate next serial number
+    -- We can just count existing appointments for that doctor on that date
+    SELECT COALESCE(MAX(serial_number), 0) INTO v_current_serial
+    FROM Appointments
+    WHERE doctor_id = NEW.doctor_id
+      AND appointment_date = NEW.appointment_date;
+
+    IF v_current_serial >= v_max_patients THEN
+        RAISE EXCEPTION 'Patient limit reached for this day';
+    END IF;
+
+    NEW.serial_number := v_current_serial + 1;
+
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

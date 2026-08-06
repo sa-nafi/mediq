@@ -70,6 +70,29 @@ CREATE TABLE Doctors (
 );
 
 -- ---------------------------------------------------------------------
+-- DOCTOR_SCHEDULES
+-- ---------------------------------------------------------------------
+CREATE TABLE Doctor_Schedules (
+    schedule_id     SERIAL PRIMARY KEY,
+    doctor_id       INT NOT NULL REFERENCES Doctors(doctor_id) ON DELETE CASCADE,
+    day_of_week     INT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
+    start_time      TIME NOT NULL,
+    end_time        TIME NOT NULL,
+    max_patients    INT NOT NULL CHECK (max_patients > 0),
+    UNIQUE (doctor_id, day_of_week)
+);
+
+-- ---------------------------------------------------------------------
+-- DOCTOR_LEAVES
+-- ---------------------------------------------------------------------
+CREATE TABLE Doctor_Leaves (
+    leave_id        SERIAL PRIMARY KEY,
+    doctor_id       INT NOT NULL REFERENCES Doctors(doctor_id) ON DELETE CASCADE,
+    leave_date      DATE NOT NULL,
+    UNIQUE (doctor_id, leave_date)
+);
+
+-- ---------------------------------------------------------------------
 -- APPOINTMENTS
 -- (No room tracking — receptionist handles room assignment verbally,
 -- outside the system.)
@@ -79,14 +102,14 @@ CREATE TABLE Appointments (
     patient_id          INT NOT NULL REFERENCES Patients(patient_id) ON DELETE CASCADE,
     doctor_id           INT NOT NULL REFERENCES Doctors(doctor_id) ON DELETE RESTRICT,
     appointment_date    DATE NOT NULL,
-    appointment_time    TIME NOT NULL,
+    serial_number       INT NOT NULL,
     status              VARCHAR(20) NOT NULL DEFAULT 'scheduled'
                            CHECK (status IN ('scheduled','completed','cancelled','no_show')),
     reason              TEXT,
     notes               TEXT,
     created_at          TIMESTAMP NOT NULL DEFAULT now(),
-    -- a doctor cannot have two appointments at the same date+time
-    UNIQUE (doctor_id, appointment_date, appointment_time)
+    -- a doctor cannot have two appointments with the same serial on the same date
+    UNIQUE (doctor_id, appointment_date, serial_number)
 );
 
 -- ---------------------------------------------------------------------
@@ -136,7 +159,8 @@ CREATE TABLE Medical_Tests (
 CREATE TABLE Medicines (
     medicine_id     SERIAL PRIMARY KEY,
     medicine_name   VARCHAR(150) NOT NULL,
-    category        VARCHAR(80)
+    category        VARCHAR(80),
+    info_link       VARCHAR(255)
 );
 
 -- ---------------------------------------------------------------------
@@ -181,6 +205,8 @@ CREATE TABLE Audit_Log (
 -- =====================================================================
 CREATE INDEX idx_appointments_patient      ON Appointments(patient_id);
 CREATE INDEX idx_appointments_doctor_date  ON Appointments(doctor_id, appointment_date);
+CREATE INDEX idx_doctor_schedules_doc      ON Doctor_Schedules(doctor_id);
+CREATE INDEX idx_doctor_leaves_doc         ON Doctor_Leaves(doctor_id);
 CREATE INDEX idx_employees_department      ON Employees(department_id);
 CREATE INDEX idx_medical_records_patient   ON Medical_Records(patient_id);
 CREATE INDEX idx_medical_records_doctor    ON Medical_Records(doctor_id);

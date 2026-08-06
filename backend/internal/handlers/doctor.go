@@ -183,3 +183,155 @@ func (h *DoctorHandler) DeleteDoctorHandler(w http.ResponseWriter, r *http.Reque
 
 	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Doctor deactivated successfully"})
 }
+
+func (h *DoctorHandler) GetDoctorSchedulesHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid doctor ID")
+		return
+	}
+
+	schedules, err := h.repo.GetDoctorSchedules(r.Context(), id)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve schedules")
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, schedules)
+}
+
+type ScheduleInputJSON struct {
+	DayOfWeek   int    `json:"day_of_week"`
+	StartTime   string `json:"start_time"` // "15:04:05"
+	EndTime     string `json:"end_time"`   // "15:04:05"
+	MaxPatients int    `json:"max_patients"`
+}
+
+func (h *DoctorHandler) UpdateDoctorSchedulesHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid doctor ID")
+		return
+	}
+
+	var req []ScheduleInputJSON
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	var params []repository.UpdateScheduleParams
+	for _, s := range req {
+		startTime, err := time.Parse("15:04:05", s.StartTime)
+		if err != nil {
+			utils.WriteError(w, http.StatusBadRequest, "Invalid start_time format, expected HH:MM:SS")
+			return
+		}
+		endTime, err := time.Parse("15:04:05", s.EndTime)
+		if err != nil {
+			utils.WriteError(w, http.StatusBadRequest, "Invalid end_time format, expected HH:MM:SS")
+			return
+		}
+		params = append(params, repository.UpdateScheduleParams{
+			DayOfWeek:   s.DayOfWeek,
+			StartTime:   startTime,
+			EndTime:     endTime,
+			MaxPatients: s.MaxPatients,
+		})
+	}
+
+	if err := h.repo.UpdateDoctorSchedules(r.Context(), id, params); err != nil {
+		if errors.Is(err, utils.ErrConflict) {
+			utils.WriteError(w, http.StatusConflict, "Duplicate schedule for the same day provided")
+			return
+		}
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to update schedules")
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Schedules updated successfully"})
+}
+
+func (h *DoctorHandler) GetDoctorLeavesHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid doctor ID")
+		return
+	}
+
+	leaves, err := h.repo.GetDoctorLeaves(r.Context(), id)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve leaves")
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, leaves)
+}
+
+type CreateLeaveRequest struct {
+	LeaveDate string `json:"leave_date"` // "2006-01-02"
+}
+
+func (h *DoctorHandler) CreateDoctorLeaveHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid doctor ID")
+		return
+	}
+
+	var req CreateLeaveRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	leaveDate, err := time.Parse("2006-01-02", req.LeaveDate)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid leave_date format, expected YYYY-MM-DD")
+		return
+	}
+
+	if err := h.repo.CreateDoctorLeave(r.Context(), id, leaveDate); err != nil {
+		if errors.Is(err, utils.ErrConflict) {
+			utils.WriteError(w, http.StatusConflict, "Doctor is already on leave for this date")
+			return
+		}
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to create leave")
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, map[string]string{"message": "Leave created successfully"})
+}
+
+func (h *DoctorHandler) DeleteDoctorLeaveHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid doctor ID")
+		return
+	}
+
+	leaveIDStr := r.PathValue("leave_id")
+	leaveID, err := strconv.Atoi(leaveIDStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid leave ID")
+		return
+	}
+
+	if err := h.repo.DeleteDoctorLeave(r.Context(), id, leaveID); err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			utils.WriteError(w, http.StatusNotFound, "Leave not found")
+			return
+		}
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to delete leave")
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Leave deleted successfully"})
+}

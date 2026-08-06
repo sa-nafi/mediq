@@ -91,6 +91,35 @@ Logs the user out by revoking their active refresh token in the database.
 
 ---
 
+### Employees (Admin Only)
+- `POST /api/employees`: Create a new employee (e.g., receptionist, lab_tech).
+- `GET /api/employees`: Get a paginated list of employees. Supports `?limit` and `?offset`.
+- `GET /api/employees/{id}`: Get a specific employee by ID.
+- `PUT /api/employees/{id}`: Update employee details.
+- `DELETE /api/employees/{id}`: Deactivate/delete an employee.
+
+### Doctors (Admin Only)
+- `POST /api/doctors`: Create a new doctor profile.
+- `GET /api/doctors`: Get a paginated list of doctors. Supports `?limit` and `?offset`.
+- `GET /api/doctors/{id}`: Get a specific doctor by ID.
+- `PUT /api/doctors/{id}`: Update doctor details.
+- `DELETE /api/doctors/{id}`: Deactivate/delete a doctor.
+
+### Departments (Admin Only)
+- `POST /api/departments`: Create a new department.
+- `GET /api/departments`: Get a paginated list of departments. Supports `?limit` and `?offset`.
+- `GET /api/departments/{id}`: Get a specific department by ID.
+- `PUT /api/departments/{id}`: Update department details.
+- `DELETE /api/departments/{id}`: Delete a department.
+
+### Medicines (Admin Only)
+- `POST /api/medicines`: Add a new medicine to the catalog.
+- `GET /api/medicines`: Get a paginated list of medicines. Supports `?search` for wildcard search, `?limit`, and `?offset`.
+- `GET /api/medicines/{id}`: Get a specific medicine by ID.
+- `PUT /api/medicines/{id}`: Update medicine details.
+- `DELETE /api/medicines/{id}`: Delete a medicine from the catalog.
+
+---
 ## Maintenance Notes
 **Refresh Tokens:** The application tracks issued refresh tokens in the `Refresh_Tokens` table for stateful rotation and revocation. Over time, expired tokens will accumulate. It is recommended to occasionally run a cleanup job to delete expired rows:
 ```sql
