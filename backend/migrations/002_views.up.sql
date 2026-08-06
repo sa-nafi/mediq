@@ -14,14 +14,19 @@ SELECT
     p.last_name,
     p.date_of_birth,
     p.blood_type,
-    COUNT(DISTINCT a.appointment_id)  AS total_appointments,
-    COUNT(DISTINCT mr.record_id)      AS total_medical_records,
-    COUNT(DISTINCT t.test_id)         AS total_tests
+    COALESCE(a.total, 0) AS total_appointments,
+    COALESCE(mr.total, 0) AS total_medical_records,
+    COALESCE(t.total, 0) AS total_tests
 FROM Patients p
-LEFT JOIN Appointments a      ON a.patient_id = p.patient_id
-LEFT JOIN Medical_Records mr  ON mr.patient_id = p.patient_id
-LEFT JOIN Medical_Tests t     ON t.patient_id = p.patient_id
-GROUP BY p.patient_id, p.first_name, p.last_name, p.date_of_birth, p.blood_type;
+LEFT JOIN LATERAL (
+    SELECT COUNT(*) as total FROM Appointments WHERE patient_id = p.patient_id
+) a ON true
+LEFT JOIN LATERAL (
+    SELECT COUNT(*) as total FROM Medical_Records WHERE patient_id = p.patient_id
+) mr ON true
+LEFT JOIN LATERAL (
+    SELECT COUNT(*) as total FROM Medical_Tests WHERE patient_id = p.patient_id
+) t ON true;
 
 -- ---------------------------------------------------------------------
 -- Doctor daily schedule: appointments joined with patient info
@@ -44,28 +49,7 @@ JOIN Doctors d     ON d.doctor_id = a.doctor_id
 JOIN Employees e   ON e.employee_id = d.employee_id
 JOIN Patients p    ON p.patient_id = a.patient_id;
 
--- ---------------------------------------------------------------------
--- Pending tests queue: for lab-tech dashboard
--- Used by: GET /tests/pending
--- ---------------------------------------------------------------------
-CREATE VIEW pending_tests_view AS
-SELECT
-    t.test_id,
-    t.test_name,
-    t.test_type,
-    t.status,
-    t.ordered_date,
-    p.patient_id,
-    p.first_name AS patient_first_name,
-    p.last_name  AS patient_last_name,
-    e.first_name AS ordering_doctor_first_name,
-    e.last_name  AS ordering_doctor_last_name
-FROM Medical_Tests t
-JOIN Patients p    ON p.patient_id = t.patient_id
-JOIN Doctors doc   ON doc.doctor_id = t.doctor_id
-JOIN Employees e   ON e.employee_id = doc.employee_id
-WHERE t.status IN ('ordered', 'in_progress')
-ORDER BY t.ordered_date ASC;
+
 
 -- ---------------------------------------------------------------------
 -- Completed tests with the performing lab-tech identified
@@ -75,10 +59,9 @@ CREATE VIEW test_detail_view AS
 SELECT
     t.test_id,
     t.test_name,
-    t.test_type,
+    t.test_details,
     t.status,
     t.result,
-    t.price,
     t.ordered_date,
     t.completed_date,
     p.patient_id,

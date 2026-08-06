@@ -141,11 +141,10 @@ CREATE TABLE Medical_Tests (
     appointment_id  INT REFERENCES Appointments(appointment_id) ON DELETE SET NULL,
     performed_by    INT REFERENCES Employees(employee_id) ON DELETE SET NULL,
     test_name       VARCHAR(150) NOT NULL,
-    test_type       VARCHAR(50),      -- e.g. 'Blood', 'Imaging', 'Urine'
+    test_details    TEXT,
     status          VARCHAR(20) NOT NULL DEFAULT 'ordered'
                        CHECK (status IN ('ordered','in_progress','completed','cancelled')),
     result          TEXT,
-    price           DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
     ordered_date    DATE NOT NULL DEFAULT CURRENT_DATE,
     completed_date  DATE
 );
@@ -213,7 +212,8 @@ CREATE INDEX idx_medical_records_patient   ON Medical_Records(patient_id);
 CREATE INDEX idx_medical_records_doctor    ON Medical_Records(doctor_id);
 CREATE INDEX idx_medical_records_appt      ON Medical_Records(appointment_id);
 CREATE INDEX idx_tests_patient             ON Medical_Tests(patient_id);
-CREATE INDEX idx_tests_status              ON Medical_Tests(status);
+CREATE INDEX idx_tests_ordered_pagination  ON Medical_Tests(ordered_date DESC, test_id DESC);
+CREATE INDEX idx_tests_status_pagination   ON Medical_Tests(status, ordered_date DESC, test_id DESC);
 CREATE INDEX idx_tests_performed_by        ON Medical_Tests(performed_by);
 CREATE INDEX idx_tests_doctor              ON Medical_Tests(doctor_id);
 CREATE INDEX idx_tests_appt                ON Medical_Tests(appointment_id);

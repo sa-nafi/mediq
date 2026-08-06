@@ -21,6 +21,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	medicineRepo := repository.NewMedicineRepository()
 	appointmentRepo := repository.NewAppointmentRepository()
 	medicalRecordRepo := repository.NewMedicalRecordRepository()
+	medicalTestRepo := repository.NewMedicalTestRepository()
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(userRepo, patientRepo, cfg.JWTSecret)
@@ -31,6 +32,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	patientHandler := handlers.NewPatientHandler(patientRepo)
 	appointmentHandler := handlers.NewAppointmentHandler(appointmentRepo)
 	medicalRecordHandler := handlers.NewMedicalRecordHandler(medicalRecordRepo)
+	medicalTestHandler := handlers.NewMedicalTestHandler(medicalTestRepo)
 
 	// Middlewares
 	txMw := middleware.TransactionMiddleware(dbPool)
@@ -78,6 +80,16 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	}
 	patientDoctorAdminAuthTx := func(h http.HandlerFunc) http.Handler {
 		return authMw(middleware.RequireRole("patient", "doctor", "admin")(txMw(http.HandlerFunc(h))))
+	}
+	labTechAuthTx := func(h http.HandlerFunc) http.Handler {
+		return authMw(middleware.RequireRole("lab_tech")(txMw(http.HandlerFunc(h))))
+	}
+	labTechAdminAuthTx := func(h http.HandlerFunc) http.Handler {
+		return authMw(middleware.RequireRole("lab_tech", "admin")(txMw(http.HandlerFunc(h))))
+	}
+
+	clinicalRolesAuthTx := func(h http.HandlerFunc) http.Handler {
+		return authMw(middleware.RequireRole("patient", "doctor", "lab_tech", "admin")(txMw(http.HandlerFunc(h))))
 	}
 
 	// Employee Routes
@@ -133,4 +145,10 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	mux.Handle("POST /api/medical-records", doctorAuthTx(medicalRecordHandler.CreateMedicalRecordHandler))
 	mux.Handle("GET /api/medical-records", patientDoctorAdminAuthTx(medicalRecordHandler.GetMedicalRecordsHandler))
 	mux.Handle("GET /api/medical-records/{id}", patientDoctorAdminAuthTx(medicalRecordHandler.GetMedicalRecordByIDHandler))
+
+	// Medical Test Routes
+	mux.Handle("POST /api/medical-tests", doctorAuthTx(medicalTestHandler.OrderMedicalTestHandler))
+	mux.Handle("GET /api/medical-tests", labTechAdminAuthTx(medicalTestHandler.GetTestsHandler))
+	mux.Handle("GET /api/medical-tests/{id}", clinicalRolesAuthTx(medicalTestHandler.GetTestByIDHandler))
+	mux.Handle("PUT /api/medical-tests/{id}", labTechAuthTx(medicalTestHandler.UpdateMedicalTestHandler))
 }

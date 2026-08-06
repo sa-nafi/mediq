@@ -76,7 +76,7 @@ Medical_Records (record_id PK, patient_id FK→Patients, doctor_id FK→Doctors,
 Medical_Tests (test_id PK, patient_id FK→Patients, doctor_id FK→Doctors [ordered by],
        appointment_id FK→Appointments NULLABLE,
        performed_by FK→Employees NULLABLE [lab_tech who ran it],
-       test_name, test_type, status, result, price, ordered_date, completed_date)
+       test_name, test_details, status, result, ordered_date, completed_date)
   status CHECK IN ('ordered','in_progress','completed','cancelled')
   -- NOTE: performed_by FKs to Employees directly (no LabTech table exists).
   -- App layer MUST verify that employee's Users.role = 'lab_tech' before
@@ -117,7 +117,6 @@ Read-side, used directly by repo functions instead of inline joins:
 |---|---|
 | `patient_summary_view` | Per-patient aggregate counts (appointments, records, tests) |
 | `doctor_schedule_view` | Doctor's appointments joined with patient info |
-| `pending_tests_view` | Medical tests with status ordered/in_progress, for lab-tech queue |
 | `test_detail_view` | Full test detail including ordering doctor + performing lab-tech |
 | `prescription_detail_view` | Prescription header + line items + doctor name, joined |
 
@@ -130,7 +129,6 @@ Business logic lives here, not in Go — repo layer calls these:
 | `book_appointment(...)` | Inserts appointment; raises exception if doctor already booked at that date+time |
 | `cancel_appointment(id)` | Cancels only if status is still `scheduled`; raises otherwise |
 | `create_prescription_with_items(record_id, doctor_id, appointment_id, instructions, items JSONB)` | Atomic header + N line-item insert from one JSON payload |
-| `complete_test(test_id, result, performed_by)` | Sets status=completed, result, performed_by, completed_date; raises if already completed/cancelled |
 
 ## Triggers (`004_triggers.sql`)
 
