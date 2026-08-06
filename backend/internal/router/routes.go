@@ -22,6 +22,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	appointmentRepo := repository.NewAppointmentRepository()
 	medicalRecordRepo := repository.NewMedicalRecordRepository()
 	medicalTestRepo := repository.NewMedicalTestRepository()
+	prescriptionRepo := repository.NewPrescriptionRepository()
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(userRepo, patientRepo, cfg.JWTSecret)
@@ -33,6 +34,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	appointmentHandler := handlers.NewAppointmentHandler(appointmentRepo)
 	medicalRecordHandler := handlers.NewMedicalRecordHandler(medicalRecordRepo)
 	medicalTestHandler := handlers.NewMedicalTestHandler(medicalTestRepo)
+	prescriptionHandler := handlers.NewPrescriptionHandler(prescriptionRepo)
 
 	// Middlewares
 	txMw := middleware.TransactionMiddleware(dbPool)
@@ -151,4 +153,9 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	mux.Handle("GET /api/medical-tests", labTechAdminAuthTx(medicalTestHandler.GetTestsHandler))
 	mux.Handle("GET /api/medical-tests/{id}", clinicalRolesAuthTx(medicalTestHandler.GetTestByIDHandler))
 	mux.Handle("PUT /api/medical-tests/{id}", labTechAuthTx(medicalTestHandler.UpdateMedicalTestHandler))
+
+	// Prescription Routes
+	mux.Handle("POST /api/prescriptions", doctorAuthTx(prescriptionHandler.CreatePrescriptionHandler))
+	mux.Handle("GET /api/prescriptions", patientDoctorAdminAuthTx(prescriptionHandler.GetPrescriptionsHandler))
+	mux.Handle("GET /api/prescriptions/{id}", patientDoctorAdminAuthTx(prescriptionHandler.GetPrescriptionByIDHandler))
 }

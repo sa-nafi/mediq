@@ -89,13 +89,23 @@ SELECT
     pr.instructions,
     e.first_name AS doctor_first_name,
     e.last_name  AS doctor_last_name,
+    mr.patient_id,
+    p.first_name AS patient_first_name,
+    p.last_name AS patient_last_name,
+    mr.record_id,
+    mr.record_date,
+    mr.diagnosis,
+    mr.treatment,
     pi.prescription_item_id,
     m.medicine_name,
+    m.info_link AS medicine_info_link,
     pi.dosage,
     pi.quantity,
     pi.duration_days
 FROM Prescriptions pr
 JOIN Doctors doc           ON doc.doctor_id = pr.doctor_id
 JOIN Employees e           ON e.employee_id = doc.employee_id
-JOIN Prescription_Items pi ON pi.prescription_id = pr.prescription_id
-JOIN Medicines m            ON m.medicine_id = pi.medicine_id;
+JOIN Medical_Records mr    ON mr.record_id = pr.record_id
+JOIN Patients p            ON p.patient_id = mr.patient_id
+LEFT JOIN Prescription_Items pi ON pi.prescription_id = pr.prescription_id
+LEFT JOIN Medicines m            ON m.medicine_id = pi.medicine_id;
