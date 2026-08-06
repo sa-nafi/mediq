@@ -256,10 +256,47 @@ attributes the inserts to the acting admin/patient.
 
 ### Bootstrapping
 
-Since only patients can self-register, the database starts with **zero
-admins**. First admin must be created via a one-off seed script (SQL
-insert or a Go `--seed-admin` flag), run manually outside normal API
-flow — not exposed as a route.
+Since only patients can self-register, the database starts with **zero admins**. Initial database seeding (including initial admin, staff, doctor, patient accounts, departments, and medicines) is performed using the Go seeder tool located in [`cmd/seed/main.go`](cmd/seed/main.go).
+
+#### Seeding Tutorial
+
+##### Prerequisites
+Ensure your PostgreSQL database is running and all database migrations (`001_schema.sql` through `007_procedures.sql`) have been applied.
+
+##### Running the Seeder
+
+1. Navigate to the `backend` directory:
+   ```bash
+   cd backend
+   ```
+
+2. Run the seeding command:
+   ```bash
+   go run cmd/seed/main.go
+   ```
+
+##### Resetting & Re-seeding (Optional)
+To truncate core tables (`Users`, `Departments`, `Medicines`) and restart identity sequences before seeding, pass the `-reset` flag:
+```bash
+go run cmd/seed/main.go -reset
+```
+
+#### Seeded Accounts & Credentials Summary
+
+All seeded user accounts share the default password: **`password123`**
+
+| Role | Email | Details |
+| --- | --- | --- |
+| **Admin** | `admin@mediq.com` | System administrator with full privileges |
+| **Receptionist** | `receptionist@mediq.com` | Front desk staff |
+| **Lab Tech** | `labtech1@mediq.com`<br>`labtech2@mediq.com` | Laboratory technicians |
+| **Doctor** | `doctor.cardio@mediq.com`<br>`doctor.neuro@mediq.com`<br>`doctor.ortho@mediq.com`<br>`doctor.gen@mediq.com` | Doctors with assigned departments & Mon–Fri 09:00–17:00 schedules |
+| **Patient** | `patient1@example.com`<br>`patient2@example.com`<br>`patient3@example.com` | Test patient profiles |
+
+#### Seeded Reference Catalog Data
+
+- **Departments**: Cardiology, Neurology, Orthopedics, Pathology, Radiology, General Medicine
+- **Medicines**: Aspirin 500mg, Amoxicillin 250mg, Paracetamol 500mg, Lisinopril 10mg, Metformin 500mg, Ibuprofen 400mg, Omeprazole 20mg, Atorvastatin 20mg, Azithromycin 250mg, Cetirizine 10mg
 
 
 ## API Specifications
