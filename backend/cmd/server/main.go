@@ -52,7 +52,7 @@ func main() {
 	addr := ":" + cfg.ServerPort
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           middleware.CORS(cfg.CORSAllowedOrigin)(mux),
+		Handler:           middleware.LoggingMiddleware(middleware.CORS(cfg.CORSAllowedOrigin)(mux)),
 		ReadTimeout:       5 * time.Second,
 		ReadHeaderTimeout: 2 * time.Second,
 		WriteTimeout:      10 * time.Second,
