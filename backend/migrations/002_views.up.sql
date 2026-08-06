@@ -101,6 +101,7 @@ LEFT JOIN Employees tech ON tech.employee_id = t.performed_by;
 CREATE VIEW prescription_detail_view AS
 SELECT
     pr.prescription_id,
+    pr.appointment_id,
     pr.prescription_date,
     pr.instructions,
     e.first_name AS doctor_first_name,

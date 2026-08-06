@@ -60,17 +60,18 @@ $$ LANGUAGE plpgsql;
 -- '[{"medicine_id":1,"dosage":"500mg twice daily","quantity":10,"duration_days":5}]'
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION create_prescription_with_items(
-    p_record_id     INT,
-    p_doctor_id     INT,
-    p_instructions  TEXT,
-    p_items         JSONB
+    p_record_id      INT,
+    p_doctor_id      INT,
+    p_appointment_id INT,
+    p_instructions   TEXT,
+    p_items          JSONB
 ) RETURNS INT AS $$
 DECLARE
     v_prescription_id INT;
     v_item JSONB;
 BEGIN
-    INSERT INTO Prescriptions (record_id, doctor_id, instructions)
-    VALUES (p_record_id, p_doctor_id, p_instructions)
+    INSERT INTO Prescriptions (record_id, doctor_id, appointment_id, instructions)
+    VALUES (p_record_id, p_doctor_id, p_appointment_id, p_instructions)
     RETURNING prescription_id INTO v_prescription_id;
 
     FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)

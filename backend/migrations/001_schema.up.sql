@@ -170,6 +170,7 @@ CREATE TABLE Prescriptions (
     prescription_id     SERIAL PRIMARY KEY,
     record_id           INT NOT NULL REFERENCES Medical_Records(record_id) ON DELETE CASCADE,
     doctor_id           INT NOT NULL REFERENCES Doctors(doctor_id) ON DELETE RESTRICT,
+    appointment_id      INT REFERENCES Appointments(appointment_id) ON DELETE SET NULL,
     prescription_date   DATE NOT NULL DEFAULT CURRENT_DATE,
     instructions        TEXT
 );
@@ -219,4 +220,5 @@ CREATE INDEX idx_tests_appt                ON Medical_Tests(appointment_id);
 CREATE INDEX idx_prescription_items_rx     ON Prescription_Items(prescription_id);
 CREATE INDEX idx_prescriptions_record      ON Prescriptions(record_id);
 CREATE INDEX idx_prescriptions_doctor      ON Prescriptions(doctor_id);
+CREATE INDEX idx_prescriptions_appointment ON Prescriptions(appointment_id);
 CREATE INDEX idx_audit_log_table_record    ON Audit_Log(table_name, record_id);

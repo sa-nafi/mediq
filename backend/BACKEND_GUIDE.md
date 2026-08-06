@@ -87,7 +87,7 @@ Medicines (medicine_id PK, medicine_name, category)
   -- Exists only so Prescription_Items has a consistent drug to point at.
 
 Prescriptions (prescription_id PK, record_id FK→Medical_Records,
-                doctor_id FK→Doctors, prescription_date, instructions)
+                doctor_id FK→Doctors, appointment_id FK→Appointments, prescription_date, instructions)
 
 Prescription_Items (prescription_item_id PK, prescription_id FK→Prescriptions,
                      medicine_id FK→Medicines, dosage, quantity, duration_days)
@@ -105,7 +105,7 @@ Audit_Log (audit_id PK, table_name, record_id, action, old_data JSONB,
 - `Users` → `Employees` (admin creates lab_tech/receptionist: 2-table insert,
   no 3rd table — role alone distinguishes them)
 - `Medical_Records` → `Prescriptions` → `Prescription_Items` (a prescription
-  is justified by a diagnosis, so it FKs to the record, not the appointment)
+  can FK to the record and optionally an appointment)
 - `Medical_Tests.doctor_id` (who ordered) vs `Medical_Tests.performed_by` (who ran it) are
   two distinct FKs — don't conflate them
 
@@ -129,7 +129,7 @@ Business logic lives here, not in Go — repo layer calls these:
 |---|---|
 | `book_appointment(...)` | Inserts appointment; raises exception if doctor already booked at that date+time |
 | `cancel_appointment(id)` | Cancels only if status is still `scheduled`; raises otherwise |
-| `create_prescription_with_items(record_id, doctor_id, instructions, items JSONB)` | Atomic header + N line-item insert from one JSON payload |
+| `create_prescription_with_items(record_id, doctor_id, appointment_id, instructions, items JSONB)` | Atomic header + N line-item insert from one JSON payload |
 | `complete_test(test_id, result, performed_by)` | Sets status=completed, result, performed_by, completed_date; raises if already completed/cancelled |
 
 ## Triggers (`004_triggers.sql`)
