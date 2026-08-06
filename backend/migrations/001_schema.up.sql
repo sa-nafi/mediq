@@ -222,3 +222,5 @@ CREATE INDEX idx_prescriptions_record      ON Prescriptions(record_id);
 CREATE INDEX idx_prescriptions_doctor      ON Prescriptions(doctor_id);
 CREATE INDEX idx_prescriptions_appointment ON Prescriptions(appointment_id);
 CREATE INDEX idx_audit_log_table_record    ON Audit_Log(table_name, record_id);
+CREATE INDEX idx_audit_log_changed_at      ON Audit_Log(changed_at DESC, audit_id DESC);
+CREATE INDEX idx_audit_log_changed_by      ON Audit_Log(changed_by);

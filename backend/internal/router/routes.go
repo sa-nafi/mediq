@@ -23,6 +23,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	medicalRecordRepo := repository.NewMedicalRecordRepository()
 	medicalTestRepo := repository.NewMedicalTestRepository()
 	prescriptionRepo := repository.NewPrescriptionRepository()
+	auditRepo := repository.NewAuditRepository()
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(userRepo, patientRepo, cfg.JWTSecret)
@@ -35,6 +36,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	medicalRecordHandler := handlers.NewMedicalRecordHandler(medicalRecordRepo)
 	medicalTestHandler := handlers.NewMedicalTestHandler(medicalTestRepo)
 	prescriptionHandler := handlers.NewPrescriptionHandler(prescriptionRepo)
+	adminHandler := handlers.NewAdminHandler(auditRepo)
 
 	// Middlewares
 	txMw := middleware.TransactionMiddleware(dbPool)
@@ -158,4 +160,8 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	mux.Handle("POST /api/prescriptions", doctorAuthTx(prescriptionHandler.CreatePrescriptionHandler))
 	mux.Handle("GET /api/prescriptions", patientDoctorAdminAuthTx(prescriptionHandler.GetPrescriptionsHandler))
 	mux.Handle("GET /api/prescriptions/{id}", patientDoctorAdminAuthTx(prescriptionHandler.GetPrescriptionByIDHandler))
+
+	// Admin Routes
+	mux.Handle("GET /api/admin/audit-logs", adminAuthTx(adminHandler.GetAuditLogsHandler))
+	mux.Handle("GET /api/admin/audit-logs/{id}", adminAuthTx(adminHandler.GetAuditLogByIDHandler))
 }
