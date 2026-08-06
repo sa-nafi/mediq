@@ -19,16 +19,16 @@ func NewMedicineRepository() *MedicineRepository {
 	return &MedicineRepository{}
 }
 
-func (r *MedicineRepository) CreateMedicine(ctx context.Context, name string, category *string) error {
+func (r *MedicineRepository) CreateMedicine(ctx context.Context, name string, category *string, infoLink *string) error {
 	tx := db.TxFromContext(ctx)
 	if tx == nil {
 		return errors.New("transaction not found in context")
 	}
 
 	_, err := tx.Exec(ctx, `
-		INSERT INTO Medicines (medicine_name, category)
-		VALUES ($1, $2)
-	`, name, category)
+		INSERT INTO Medicines (medicine_name, category, info_link)
+		VALUES ($1, $2, $3)
+	`, name, category, infoLink)
 	if err != nil {
 		return fmt.Errorf("failed to create medicine: %w", err)
 	}
@@ -57,7 +57,7 @@ func (r *MedicineRepository) GetAllMedicines(ctx context.Context, searchName, ca
 	query := `
 		SELECT 
 			COUNT(*) OVER() as total_count,
-			medicine_id, medicine_name, category
+			medicine_id, medicine_name, category, info_link
 		FROM Medicines
 	`
 
@@ -78,7 +78,7 @@ func (r *MedicineRepository) GetAllMedicines(ctx context.Context, searchName, ca
 	var totalCount int
 	for rows.Next() {
 		var m models.Medicine
-		err := rows.Scan(&totalCount, &m.MedicineID, &m.MedicineName, &m.Category)
+		err := rows.Scan(&totalCount, &m.MedicineID, &m.MedicineName, &m.Category, &m.InfoLink)
 		if err != nil {
 			return nil, 0, fmt.Errorf("failed to scan row: %w", err)
 		}
@@ -95,17 +95,17 @@ func (r *MedicineRepository) GetMedicineByID(ctx context.Context, id int) (*mode
 
 	var m models.Medicine
 	err := tx.QueryRow(ctx, `
-		SELECT medicine_id, medicine_name, category
+		SELECT medicine_id, medicine_name, category, info_link
 		FROM Medicines
 		WHERE medicine_id = $1
-	`, id).Scan(&m.MedicineID, &m.MedicineName, &m.Category)
+	`, id).Scan(&m.MedicineID, &m.MedicineName, &m.Category, &m.InfoLink)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get medicine: %w", err)
 	}
 	return &m, nil
 }
 
-func (r *MedicineRepository) UpdateMedicine(ctx context.Context, id int, name string, category *string) error {
+func (r *MedicineRepository) UpdateMedicine(ctx context.Context, id int, name string, category *string, infoLink *string) error {
 	tx := db.TxFromContext(ctx)
 	if tx == nil {
 		return errors.New("transaction not found in context")
@@ -113,9 +113,9 @@ func (r *MedicineRepository) UpdateMedicine(ctx context.Context, id int, name st
 
 	res, err := tx.Exec(ctx, `
 		UPDATE Medicines
-		SET medicine_name = $1, category = $2
-		WHERE medicine_id = $3
-	`, name, category, id)
+		SET medicine_name = $1, category = $2, info_link = $3
+		WHERE medicine_id = $4
+	`, name, category, infoLink, id)
 	if err != nil {
 		return fmt.Errorf("failed to update medicine: %w", err)
 	}

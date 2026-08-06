@@ -70,3 +70,32 @@ func ParsePaginationParams(r *http.Request) (page int, limit int, offset int) {
 	offset = (page - 1) * limit
 	return page, limit, offset
 }
+
+// CursorPaginatedResponse represents a standardized cursor-paginated response format.
+type CursorPaginatedResponse struct {
+	Data       interface{} `json:"data"`
+	NextCursor string      `json:"next_cursor"`
+	Limit      int         `json:"limit"`
+}
+
+// WriteCursorPaginatedJSON writes a cursor-paginated JSON response.
+func WriteCursorPaginatedJSON(w http.ResponseWriter, status int, data interface{}, nextCursor string, limit int) {
+	response := CursorPaginatedResponse{
+		Data:       data,
+		NextCursor: nextCursor,
+		Limit:      limit,
+	}
+	WriteJSON(w, status, response)
+}
+
+// ParseCursorParams extracts limit and cursor from the query string.
+func ParseCursorParams(r *http.Request) (limit int, cursor string) {
+	limit = 20
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+	cursor = r.URL.Query().Get("cursor")
+	return limit, cursor
+}

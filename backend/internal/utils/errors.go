@@ -9,4 +9,5 @@ var (
 	ErrInUse            = errors.New("resource is currently in use and cannot be deleted")
 	ErrNotFound         = errors.New("resource not found")
 	ErrInvalidReference = errors.New("invalid reference to another resource")
+	ErrInvalidCursor    = errors.New("invalid cursor")
 )

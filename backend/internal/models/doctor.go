@@ -26,3 +26,18 @@ type Doctor struct {
 	LicenseNumber   string    `json:"license_number"`
 	ConsultationFee float64   `json:"consultation_fee"`
 }
+
+type DoctorSchedule struct {
+	ScheduleID  int       `json:"schedule_id"`
+	DoctorID    int       `json:"doctor_id"`
+	DayOfWeek   int       `json:"day_of_week"` // 0-6, 0 is Sunday
+	StartTime   time.Time `json:"start_time"`
+	EndTime     time.Time `json:"end_time"`
+	MaxPatients int       `json:"max_patients"`
+}
+
+type DoctorLeave struct {
+	LeaveID   int       `json:"leave_id"`
+	DoctorID  int       `json:"doctor_id"`
+	LeaveDate time.Time `json:"leave_date"`
+}

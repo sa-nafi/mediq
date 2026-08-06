@@ -219,3 +219,185 @@ func (r *DoctorRepository) DeactivateUserByDoctorID(ctx context.Context, doctorI
 	}
 	return nil
 }
+
+func (r *DoctorRepository) GetDoctorSchedules(ctx context.Context, doctorID int) ([]models.DoctorSchedule, error) {
+	tx := db.TxFromContext(ctx)
+	if tx == nil {
+		return nil, errors.New("transaction not found in context")
+	}
+
+	rows, err := tx.Query(ctx, `
+		SELECT schedule_id, doctor_id, day_of_week, start_time, end_time, max_patients
+		FROM Doctor_Schedules
+		WHERE doctor_id = $1
+		ORDER BY day_of_week
+	`, doctorID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query schedules: %w", err)
+	}
+	defer rows.Close()
+
+	var schedules []models.DoctorSchedule
+	for rows.Next() {
+		var s models.DoctorSchedule
+		if err := rows.Scan(&s.ScheduleID, &s.DoctorID, &s.DayOfWeek, &s.StartTime, &s.EndTime, &s.MaxPatients); err != nil {
+			return nil, fmt.Errorf("failed to scan schedule: %w", err)
+		}
+		schedules = append(schedules, s)
+	}
+	return schedules, rows.Err()
+}
+
+type UpdateScheduleParams struct {
+	DayOfWeek   int
+	StartTime   time.Time
+	EndTime     time.Time
+	MaxPatients int
+}
+
+func (r *DoctorRepository) UpdateDoctorSchedules(ctx context.Context, doctorID int, schedules []UpdateScheduleParams) error {
+	tx := db.TxFromContext(ctx)
+	if tx == nil {
+		return errors.New("transaction not found in context")
+	}
+
+	// Delete existing schedules
+	if _, err := tx.Exec(ctx, "DELETE FROM Doctor_Schedules WHERE doctor_id = $1", doctorID); err != nil {
+		return fmt.Errorf("failed to delete existing schedules: %w", err)
+	}
+
+	// Insert new schedules
+	for _, s := range schedules {
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO Doctor_Schedules (doctor_id, day_of_week, start_time, end_time, max_patients)
+			VALUES ($1, $2, $3, $4, $5)
+		`, doctorID, s.DayOfWeek, s.StartTime.Format("15:04:05"), s.EndTime.Format("15:04:05"), s.MaxPatients); err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+				return utils.ErrConflict
+			}
+			return fmt.Errorf("failed to insert schedule: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (r *DoctorRepository) GetDoctorLeaves(ctx context.Context, doctorID int) ([]models.DoctorLeave, error) {
+	tx := db.TxFromContext(ctx)
+	if tx == nil {
+		return nil, errors.New("transaction not found in context")
+	}
+
+	rows, err := tx.Query(ctx, `
+		SELECT leave_id, doctor_id, leave_date
+		FROM Doctor_Leaves
+		WHERE doctor_id = $1
+		ORDER BY leave_date
+	`, doctorID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query leaves: %w", err)
+	}
+	defer rows.Close()
+
+	var leaves []models.DoctorLeave
+	for rows.Next() {
+		var l models.DoctorLeave
+		if err := rows.Scan(&l.LeaveID, &l.DoctorID, &l.LeaveDate); err != nil {
+			return nil, fmt.Errorf("failed to scan leave: %w", err)
+		}
+		leaves = append(leaves, l)
+	}
+	return leaves, rows.Err()
+}
+
+func (r *DoctorRepository) CreateDoctorLeave(ctx context.Context, doctorID int, leaveDate time.Time) error {
+	tx := db.TxFromContext(ctx)
+	if tx == nil {
+		return errors.New("transaction not found in context")
+	}
+
+	_, err := tx.Exec(ctx, `
+		INSERT INTO Doctor_Leaves (doctor_id, leave_date)
+		VALUES ($1, $2)
+	`, doctorID, leaveDate.Format("2006-01-02"))
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			return utils.ErrConflict
+		}
+		return fmt.Errorf("failed to insert leave: %w", err)
+	}
+	return nil
+}
+
+func (r *DoctorRepository) DeleteDoctorLeave(ctx context.Context, doctorID int, leaveID int) error {
+	tx := db.TxFromContext(ctx)
+	if tx == nil {
+		return errors.New("transaction not found in context")
+	}
+
+	res, err := tx.Exec(ctx, "DELETE FROM Doctor_Leaves WHERE doctor_id = $1 AND leave_id = $2", doctorID, leaveID)
+	if err != nil {
+		return fmt.Errorf("failed to delete leave: %w", err)
+	}
+	if res.RowsAffected() == 0 {
+		return utils.ErrNotFound
+	}
+	return nil
+}
+
+// GetDoctorAvailability returns available YYYY-MM-DD dates for a doctor within a time window.
+func (r *DoctorRepository) GetDoctorAvailability(ctx context.Context, doctorID int, startDate, endDate time.Time) ([]string, error) {
+	tx := db.TxFromContext(ctx)
+	if tx == nil {
+		return nil, errors.New("transaction not found in context")
+	}
+
+	query := `
+		WITH dates AS (
+			SELECT generate_series($2::date, $3::date, '1 day'::interval)::date AS check_date
+		),
+		leaves AS (
+			SELECT leave_date FROM Doctor_Leaves WHERE doctor_id = $1
+		),
+		schedules AS (
+			SELECT day_of_week, max_patients FROM Doctor_Schedules WHERE doctor_id = $1
+		),
+		booked AS (
+			SELECT appointment_date, COUNT(*) AS current_count
+			FROM Appointments
+			WHERE doctor_id = $1 AND status != 'cancelled'
+			GROUP BY appointment_date
+		)
+		SELECT to_char(d.check_date, 'YYYY-MM-DD')
+		FROM dates d
+		JOIN schedules s ON EXTRACT(DOW FROM d.check_date) = s.day_of_week
+		LEFT JOIN leaves l ON d.check_date = l.leave_date
+		LEFT JOIN booked b ON d.check_date = b.appointment_date
+		WHERE l.leave_date IS NULL
+		  AND COALESCE(b.current_count, 0) < s.max_patients
+		ORDER BY d.check_date;
+	`
+
+	rows, err := tx.Query(ctx, query, doctorID, startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to query availability: %w", err)
+	}
+	defer rows.Close()
+
+	var availableDates []string
+	for rows.Next() {
+		var date string
+		if err := rows.Scan(&date); err != nil {
+			return nil, fmt.Errorf("failed to scan availability date: %w", err)
+		}
+		availableDates = append(availableDates, date)
+	}
+
+	if availableDates == nil {
+		availableDates = []string{}
+	}
+
+	return availableDates, rows.Err()
+}

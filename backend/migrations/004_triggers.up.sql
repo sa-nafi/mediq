@@ -92,3 +92,10 @@ CREATE TRIGGER trg_audit_prescriptions
 CREATE TRIGGER trg_audit_prescription_items
     AFTER INSERT OR UPDATE OR DELETE ON Prescription_Items
     FOR EACH ROW EXECUTE FUNCTION audit_trigger_func('prescription_item_id');
+
+-- ---------------------------------------------------------------------
+-- Appointment scheduling trigger
+-- ---------------------------------------------------------------------
+CREATE TRIGGER trg_assign_appointment_serial
+    BEFORE INSERT ON Appointments
+    FOR EACH ROW EXECUTE FUNCTION assign_appointment_serial();

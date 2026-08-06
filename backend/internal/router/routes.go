@@ -19,6 +19,11 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	doctorRepo := repository.NewDoctorRepository()
 	departmentRepo := repository.NewDepartmentRepository()
 	medicineRepo := repository.NewMedicineRepository()
+	appointmentRepo := repository.NewAppointmentRepository()
+	medicalRecordRepo := repository.NewMedicalRecordRepository()
+	medicalTestRepo := repository.NewMedicalTestRepository()
+	prescriptionRepo := repository.NewPrescriptionRepository()
+	auditRepo := repository.NewAuditRepository()
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(userRepo, patientRepo, cfg.JWTSecret)
@@ -26,9 +31,24 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	doctorHandler := handlers.NewDoctorHandler(doctorRepo)
 	departmentHandler := handlers.NewDepartmentHandler(departmentRepo)
 	medicineHandler := handlers.NewMedicineHandler(medicineRepo)
+	patientHandler := handlers.NewPatientHandler(patientRepo)
+	appointmentHandler := handlers.NewAppointmentHandler(appointmentRepo)
+	medicalRecordHandler := handlers.NewMedicalRecordHandler(medicalRecordRepo)
+	medicalTestHandler := handlers.NewMedicalTestHandler(medicalTestRepo)
+	prescriptionHandler := handlers.NewPrescriptionHandler(prescriptionRepo)
+	adminHandler := handlers.NewAdminHandler(auditRepo)
 
 	// Middlewares
 	txMw := middleware.TransactionMiddleware(dbPool)
+	authMw := middleware.RequireAuth(cfg.JWTSecret)
+
+	// allow wraps a handler with auth → role-check → transaction middleware.
+	// Roles are declared inline at each route for immediate readability.
+	allow := func(roles ...string) func(http.HandlerFunc) http.Handler {
+		return func(h http.HandlerFunc) http.Handler {
+			return authMw(middleware.RequireRole(roles...)(txMw(http.HandlerFunc(h))))
+		}
+	}
 
 	// Health and readiness endpoints
 	mux.HandleFunc("GET /api/health", handlers.HealthCheck)
@@ -40,40 +60,74 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	mux.Handle("POST /api/auth/refresh", txMw(http.HandlerFunc(authHandler.RefreshTokenHandler)))
 
 	// Protected Auth routes
-	authMw := middleware.RequireAuth(cfg.JWTSecret)
 	mux.Handle("POST /api/auth/logout", authMw(txMw(http.HandlerFunc(authHandler.LogoutHandler))))
 
-	// Admin middlewares
-	adminMw := middleware.RequireRole("admin")
-	adminAuthTx := func(h http.HandlerFunc) http.Handler {
-		return authMw(adminMw(txMw(http.HandlerFunc(h))))
-	}
-
 	// Employee Routes
-	mux.Handle("POST /api/employees", adminAuthTx(employeeHandler.CreateStaffHandler))
-	mux.Handle("GET /api/employees", adminAuthTx(employeeHandler.GetEmployeesHandler))
-	mux.Handle("GET /api/employees/{id}", adminAuthTx(employeeHandler.GetEmployeeByIDHandler))
-	mux.Handle("PUT /api/employees/{id}", adminAuthTx(employeeHandler.UpdateEmployeeHandler))
-	mux.Handle("DELETE /api/employees/{id}", adminAuthTx(employeeHandler.DeleteEmployeeHandler))
+	mux.Handle("POST /api/employees", allow("admin")(employeeHandler.CreateStaffHandler))
+	mux.Handle("GET /api/employees", allow("admin")(employeeHandler.GetEmployeesHandler))
+	mux.Handle("GET /api/employees/{id}", allow("admin")(employeeHandler.GetEmployeeByIDHandler))
+	mux.Handle("PUT /api/employees/{id}", allow("admin")(employeeHandler.UpdateEmployeeHandler))
+	mux.Handle("DELETE /api/employees/{id}", allow("admin")(employeeHandler.DeleteEmployeeHandler))
 
 	// Doctor Routes
-	mux.Handle("POST /api/doctors", adminAuthTx(doctorHandler.CreateDoctorHandler))
-	mux.Handle("GET /api/doctors", adminAuthTx(doctorHandler.GetDoctorsHandler))
-	mux.Handle("GET /api/doctors/{id}", adminAuthTx(doctorHandler.GetDoctorByIDHandler))
-	mux.Handle("PUT /api/doctors/{id}", adminAuthTx(doctorHandler.UpdateDoctorHandler))
-	mux.Handle("DELETE /api/doctors/{id}", adminAuthTx(doctorHandler.DeleteDoctorHandler))
+	mux.Handle("POST /api/doctors", allow("admin")(doctorHandler.CreateDoctorHandler))
+	mux.Handle("GET /api/doctors", allow("admin")(doctorHandler.GetDoctorsHandler))
+	mux.Handle("GET /api/doctors/{id}", allow("admin")(doctorHandler.GetDoctorByIDHandler))
+	mux.Handle("PUT /api/doctors/{id}", allow("admin")(doctorHandler.UpdateDoctorHandler))
+	mux.Handle("DELETE /api/doctors/{id}", allow("admin")(doctorHandler.DeleteDoctorHandler))
+
+	mux.Handle("GET /api/doctors/{id}/schedules", allow("admin")(doctorHandler.GetDoctorSchedulesHandler))
+	mux.Handle("PUT /api/doctors/{id}/schedules", allow("admin")(doctorHandler.UpdateDoctorSchedulesHandler))
+
+	mux.Handle("GET /api/doctors/{id}/availability", allow("patient", "doctor", "receptionist", "admin")(doctorHandler.GetDoctorAvailabilityHandler))
+
+	mux.Handle("GET /api/doctors/{id}/leaves", allow("admin")(doctorHandler.GetDoctorLeavesHandler))
+	mux.Handle("POST /api/doctors/{id}/leaves", allow("admin")(doctorHandler.CreateDoctorLeaveHandler))
+	mux.Handle("DELETE /api/doctors/{id}/leaves/{leave_id}", allow("admin")(doctorHandler.DeleteDoctorLeaveHandler))
 
 	// Department Routes
-	mux.Handle("POST /api/departments", adminAuthTx(departmentHandler.CreateDepartmentHandler))
-	mux.Handle("GET /api/departments", adminAuthTx(departmentHandler.GetDepartmentsHandler))
-	mux.Handle("GET /api/departments/{id}", adminAuthTx(departmentHandler.GetDepartmentByIDHandler))
-	mux.Handle("PUT /api/departments/{id}", adminAuthTx(departmentHandler.UpdateDepartmentHandler))
-	mux.Handle("DELETE /api/departments/{id}", adminAuthTx(departmentHandler.DeleteDepartmentHandler))
+	mux.Handle("POST /api/departments", allow("admin")(departmentHandler.CreateDepartmentHandler))
+	mux.Handle("GET /api/departments", allow("admin")(departmentHandler.GetDepartmentsHandler))
+	mux.Handle("GET /api/departments/{id}", allow("admin")(departmentHandler.GetDepartmentByIDHandler))
+	mux.Handle("PUT /api/departments/{id}", allow("admin")(departmentHandler.UpdateDepartmentHandler))
+	mux.Handle("DELETE /api/departments/{id}", allow("admin")(departmentHandler.DeleteDepartmentHandler))
 
 	// Medicine Routes
-	mux.Handle("POST /api/medicines", adminAuthTx(medicineHandler.CreateMedicineHandler))
-	mux.Handle("GET /api/medicines", adminAuthTx(medicineHandler.GetMedicinesHandler))
-	mux.Handle("GET /api/medicines/{id}", adminAuthTx(medicineHandler.GetMedicineByIDHandler))
-	mux.Handle("PUT /api/medicines/{id}", adminAuthTx(medicineHandler.UpdateMedicineHandler))
-	mux.Handle("DELETE /api/medicines/{id}", adminAuthTx(medicineHandler.DeleteMedicineHandler))
+	mux.Handle("POST /api/medicines", allow("admin")(medicineHandler.CreateMedicineHandler))
+	mux.Handle("GET /api/medicines", allow("patient", "doctor", "receptionist", "admin")(medicineHandler.GetMedicinesHandler))
+	mux.Handle("GET /api/medicines/{id}", allow("patient", "doctor", "receptionist", "admin")(medicineHandler.GetMedicineByIDHandler))
+	mux.Handle("PUT /api/medicines/{id}", allow("admin")(medicineHandler.UpdateMedicineHandler))
+	mux.Handle("DELETE /api/medicines/{id}", allow("admin")(medicineHandler.DeleteMedicineHandler))
+
+	// Patient Routes
+	mux.Handle("GET /api/patients", allow("receptionist", "doctor", "admin")(patientHandler.GetPatientsHandler))
+	mux.Handle("GET /api/patients/{id}", allow("patient", "doctor", "receptionist", "admin")(patientHandler.GetPatientByIDHandler))
+	mux.Handle("PUT /api/patients/{id}", allow("patient", "admin")(patientHandler.UpdatePatientHandler))
+
+	// Appointment Routes
+	mux.Handle("POST /api/appointments", allow("patient")(appointmentHandler.CreateAppointmentHandler))
+	mux.Handle("GET /api/appointments", allow("patient", "doctor", "receptionist", "admin")(appointmentHandler.GetAppointmentsHandler))
+	mux.Handle("GET /api/appointments/{id}", allow("patient", "doctor", "receptionist", "admin")(appointmentHandler.GetAppointmentByIDHandler))
+	mux.Handle("PUT /api/appointments/{id}/cancel", allow("patient", "receptionist", "admin")(appointmentHandler.CancelAppointmentHandler))
+	mux.Handle("PATCH /api/appointments/{id}/status", allow("doctor", "receptionist")(appointmentHandler.UpdateAppointmentStatusHandler))
+
+	// Medical Record Routes
+	mux.Handle("POST /api/medical-records", allow("doctor")(medicalRecordHandler.CreateMedicalRecordHandler))
+	mux.Handle("GET /api/medical-records", allow("patient", "doctor", "admin")(medicalRecordHandler.GetMedicalRecordsHandler))
+	mux.Handle("GET /api/medical-records/{id}", allow("patient", "doctor", "admin")(medicalRecordHandler.GetMedicalRecordByIDHandler))
+
+	// Medical Test Routes
+	mux.Handle("POST /api/medical-tests", allow("doctor")(medicalTestHandler.OrderMedicalTestHandler))
+	mux.Handle("GET /api/medical-tests", allow("lab_tech", "admin")(medicalTestHandler.GetTestsHandler))
+	mux.Handle("GET /api/medical-tests/{id}", allow("patient", "doctor", "lab_tech", "admin")(medicalTestHandler.GetTestByIDHandler))
+	mux.Handle("PUT /api/medical-tests/{id}", allow("lab_tech")(medicalTestHandler.UpdateMedicalTestHandler))
+
+	// Prescription Routes
+	mux.Handle("POST /api/prescriptions", allow("doctor")(prescriptionHandler.CreatePrescriptionHandler))
+	mux.Handle("GET /api/prescriptions", allow("patient", "doctor", "admin")(prescriptionHandler.GetPrescriptionsHandler))
+	mux.Handle("GET /api/prescriptions/{id}", allow("patient", "doctor", "admin")(prescriptionHandler.GetPrescriptionByIDHandler))
+
+	// Admin Routes
+	mux.Handle("GET /api/admin/audit-logs", allow("admin")(adminHandler.GetAuditLogsHandler))
+	mux.Handle("GET /api/admin/audit-logs/{id}", allow("admin")(adminHandler.GetAuditLogByIDHandler))
 }

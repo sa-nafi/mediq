@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/sa-nafi/mediq/backend/internal/repository"
@@ -21,6 +22,7 @@ func NewMedicineHandler(repo *repository.MedicineRepository) *MedicineHandler {
 type MedicineRequest struct {
 	MedicineName string  `json:"medicine_name"`
 	Category     *string `json:"category"`
+	InfoLink     *string `json:"info_link"`
 }
 
 func (h *MedicineHandler) CreateMedicineHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +38,19 @@ func (h *MedicineHandler) CreateMedicineHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if err := h.repo.CreateMedicine(r.Context(), req.MedicineName, req.Category); err != nil {
+	if req.InfoLink != nil && *req.InfoLink != "" {
+		if len(*req.InfoLink) > 255 {
+			utils.WriteError(w, http.StatusBadRequest, "info_link must be 255 characters or fewer")
+			return
+		}
+		u, err := url.ParseRequestURI(*req.InfoLink)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+			utils.WriteError(w, http.StatusBadRequest, "info_link must be a valid HTTP/HTTPS URL")
+			return
+		}
+	}
+
+	if err := h.repo.CreateMedicine(r.Context(), req.MedicineName, req.Category, req.InfoLink); err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Failed to create medicine")
 		return
 	}
@@ -95,7 +109,19 @@ func (h *MedicineHandler) UpdateMedicineHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if err := h.repo.UpdateMedicine(r.Context(), id, req.MedicineName, req.Category); err != nil {
+	if req.InfoLink != nil && *req.InfoLink != "" {
+		if len(*req.InfoLink) > 255 {
+			utils.WriteError(w, http.StatusBadRequest, "info_link must be 255 characters or fewer")
+			return
+		}
+		u, err := url.ParseRequestURI(*req.InfoLink)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+			utils.WriteError(w, http.StatusBadRequest, "info_link must be a valid HTTP/HTTPS URL")
+			return
+		}
+	}
+
+	if err := h.repo.UpdateMedicine(r.Context(), id, req.MedicineName, req.Category, req.InfoLink); err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
 			utils.WriteError(w, http.StatusNotFound, "Medicine not found")
 			return
