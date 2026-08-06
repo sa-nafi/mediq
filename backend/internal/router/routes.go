@@ -19,6 +19,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	doctorRepo := repository.NewDoctorRepository()
 	departmentRepo := repository.NewDepartmentRepository()
 	medicineRepo := repository.NewMedicineRepository()
+	appointmentRepo := repository.NewAppointmentRepository()
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(userRepo, patientRepo, cfg.JWTSecret)
@@ -27,6 +28,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	departmentHandler := handlers.NewDepartmentHandler(departmentRepo)
 	medicineHandler := handlers.NewMedicineHandler(medicineRepo)
 	patientHandler := handlers.NewPatientHandler(patientRepo)
+	appointmentHandler := handlers.NewAppointmentHandler(appointmentRepo)
 
 	// Middlewares
 	txMw := middleware.TransactionMiddleware(dbPool)
@@ -59,6 +61,15 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	}
 	patientAdminAuthTx := func(h http.HandlerFunc) http.Handler {
 		return authMw(middleware.RequireRole("patient", "admin")(txMw(http.HandlerFunc(h))))
+	}
+	patientAuthTx := func(h http.HandlerFunc) http.Handler {
+		return authMw(middleware.RequireRole("patient")(txMw(http.HandlerFunc(h))))
+	}
+	doctorReceptionistAuthTx := func(h http.HandlerFunc) http.Handler {
+		return authMw(middleware.RequireRole("doctor", "receptionist")(txMw(http.HandlerFunc(h))))
+	}
+	patientReceptionistAdminAuthTx := func(h http.HandlerFunc) http.Handler {
+		return authMw(middleware.RequireRole("patient", "receptionist", "admin")(txMw(http.HandlerFunc(h))))
 	}
 
 	// Employee Routes
@@ -100,4 +111,11 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	mux.Handle("GET /api/patients", receptionistDoctorAdminAuthTx(patientHandler.GetPatientsHandler))
 	mux.Handle("GET /api/patients/{id}", patientStaffAuthTx(patientHandler.GetPatientByIDHandler))
 	mux.Handle("PUT /api/patients/{id}", patientAdminAuthTx(patientHandler.UpdatePatientHandler))
+
+	// Appointment Routes
+	mux.Handle("POST /api/appointments", patientAuthTx(appointmentHandler.CreateAppointmentHandler))
+	mux.Handle("GET /api/appointments", patientStaffAuthTx(appointmentHandler.GetAppointmentsHandler))
+	mux.Handle("GET /api/appointments/{id}", patientStaffAuthTx(appointmentHandler.GetAppointmentByIDHandler))
+	mux.Handle("PUT /api/appointments/{id}/cancel", patientReceptionistAdminAuthTx(appointmentHandler.CancelAppointmentHandler))
+	mux.Handle("PATCH /api/appointments/{id}/status", doctorReceptionistAuthTx(appointmentHandler.UpdateAppointmentStatusHandler))
 }

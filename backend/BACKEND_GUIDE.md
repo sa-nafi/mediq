@@ -65,7 +65,7 @@ Doctors (doctor_id PK, employee_id FK→Employees UNIQUE, specialization,
          license_number UNIQUE, consultation_fee)
 
 Appointments (appointment_id PK, patient_id FK→Patients, doctor_id FK→Doctors,
-              appointment_date, appointment_time, status, reason, notes, created_at)
+              appointment_date, appointment_time, type, status, notes, created_at)
   status CHECK IN ('scheduled','completed','cancelled','no_show')
   UNIQUE (doctor_id, appointment_date, appointment_time)  -- no double-booking
 

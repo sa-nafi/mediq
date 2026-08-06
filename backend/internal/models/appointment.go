@@ -13,6 +13,14 @@ const (
 	StatusNoShow    AppointmentStatus = "no_show"
 )
 
+type AppointmentType string
+
+const (
+	TypeNew      AppointmentType = "new"
+	TypeFollowUp AppointmentType = "follow-up"
+	TypeReport   AppointmentType = "report"
+)
+
 type Appointment struct {
 	AppointmentID   int               `json:"appointment_id"`
 	PatientID       int               `json:"patient_id"`
@@ -20,7 +28,7 @@ type Appointment struct {
 	AppointmentDate time.Time         `json:"appointment_date"`
 	SerialNumber    int               `json:"serial_number"`
 	Status          AppointmentStatus `json:"status"`
-	Reason          string            `json:"reason,omitempty"`
+	Type            AppointmentType   `json:"type"`
 	Notes           string            `json:"notes,omitempty"`
 	CreatedAt       time.Time         `json:"created_at"`
 }

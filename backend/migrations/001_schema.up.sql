@@ -105,7 +105,7 @@ CREATE TABLE Appointments (
     serial_number       INT NOT NULL,
     status              VARCHAR(20) NOT NULL DEFAULT 'scheduled'
                            CHECK (status IN ('scheduled','completed','cancelled','no_show')),
-    reason              TEXT,
+    type                VARCHAR(20) NOT NULL CHECK (type IN ('new','follow-up','report')),
     notes               TEXT,
     created_at          TIMESTAMP NOT NULL DEFAULT now(),
     -- a doctor cannot have two appointments with the same serial on the same date
