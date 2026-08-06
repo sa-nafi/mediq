@@ -335,3 +335,30 @@ func (h *DoctorHandler) DeleteDoctorLeaveHandler(w http.ResponseWriter, r *http.
 
 	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Leave deleted successfully"})
 }
+
+func (h *DoctorHandler) GetDoctorAvailabilityHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid doctor ID")
+		return
+	}
+
+	startDate := time.Now()
+	endDate := startDate.AddDate(0, 0, 7)
+
+	availableDates, err := h.repo.GetDoctorAvailability(r.Context(), id, startDate, endDate)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to calculate availability")
+		return
+	}
+
+	resp := map[string]interface{}{
+		"doctor_id":       id,
+		"window_start":    startDate.Format("2006-01-02"),
+		"window_end":      endDate.Format("2006-01-02"),
+		"available_dates": availableDates,
+	}
+
+	utils.WriteJSON(w, http.StatusOK, resp)
+}

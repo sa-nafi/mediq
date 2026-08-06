@@ -346,3 +346,58 @@ func (r *DoctorRepository) DeleteDoctorLeave(ctx context.Context, doctorID int, 
 	}
 	return nil
 }
+
+// GetDoctorAvailability returns available YYYY-MM-DD dates for a doctor within a time window.
+func (r *DoctorRepository) GetDoctorAvailability(ctx context.Context, doctorID int, startDate, endDate time.Time) ([]string, error) {
+	tx := db.TxFromContext(ctx)
+	if tx == nil {
+		return nil, errors.New("transaction not found in context")
+	}
+
+	query := `
+		WITH dates AS (
+			SELECT generate_series($2::date, $3::date, '1 day'::interval)::date AS check_date
+		),
+		leaves AS (
+			SELECT leave_date FROM Doctor_Leaves WHERE doctor_id = $1
+		),
+		schedules AS (
+			SELECT day_of_week, max_patients FROM Doctor_Schedules WHERE doctor_id = $1
+		),
+		booked AS (
+			SELECT appointment_date, COUNT(*) AS current_count
+			FROM Appointments
+			WHERE doctor_id = $1 AND status != 'cancelled'
+			GROUP BY appointment_date
+		)
+		SELECT to_char(d.check_date, 'YYYY-MM-DD')
+		FROM dates d
+		JOIN schedules s ON EXTRACT(DOW FROM d.check_date) = s.day_of_week
+		LEFT JOIN leaves l ON d.check_date = l.leave_date
+		LEFT JOIN booked b ON d.check_date = b.appointment_date
+		WHERE l.leave_date IS NULL
+		  AND COALESCE(b.current_count, 0) < s.max_patients
+		ORDER BY d.check_date;
+	`
+
+	rows, err := tx.Query(ctx, query, doctorID, startDate.Format("2006-01-02"), endDate.Format("2006-01-02"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to query availability: %w", err)
+	}
+	defer rows.Close()
+
+	var availableDates []string
+	for rows.Next() {
+		var date string
+		if err := rows.Scan(&date); err != nil {
+			return nil, fmt.Errorf("failed to scan availability date: %w", err)
+		}
+		availableDates = append(availableDates, date)
+	}
+
+	if availableDates == nil {
+		availableDates = []string{}
+	}
+
+	return availableDates, rows.Err()
+}

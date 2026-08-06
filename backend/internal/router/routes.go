@@ -89,6 +89,8 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	mux.Handle("GET /api/doctors/{id}/schedules", adminAuthTx(doctorHandler.GetDoctorSchedulesHandler))
 	mux.Handle("PUT /api/doctors/{id}/schedules", adminAuthTx(doctorHandler.UpdateDoctorSchedulesHandler))
 
+	mux.Handle("GET /api/doctors/{id}/availability", patientStaffAuthTx(doctorHandler.GetDoctorAvailabilityHandler))
+
 	mux.Handle("GET /api/doctors/{id}/leaves", adminAuthTx(doctorHandler.GetDoctorLeavesHandler))
 	mux.Handle("POST /api/doctors/{id}/leaves", adminAuthTx(doctorHandler.CreateDoctorLeaveHandler))
 	mux.Handle("DELETE /api/doctors/{id}/leaves/{leave_id}", adminAuthTx(doctorHandler.DeleteDoctorLeaveHandler))
