@@ -64,7 +64,10 @@ export function BookAppointmentModal() {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 mt-4">
+        <form 
+          onSubmit={handleSubmit(onSubmit)} 
+          className="grid gap-4 mt-4 animate-slide-up"
+        >
           {/* Patient Name */}
           <div>
             <label htmlFor="patientName" className="block text-sm font-medium text-foreground mb-1.5">

@@ -90,8 +90,8 @@ func (r *DoctorRepository) GetAllDoctors(ctx context.Context, limit, offset int)
 	rows, err := tx.Query(ctx, `
 		SELECT 
 			COUNT(*) OVER() as total_count,
-			doc.doctor_id, e.employee_id, u.user_id, u.public_id, u.email, u.role, u.is_active,
-			e.department_id, d.department_name, e.first_name, e.last_name, e.phone, e.hire_date,
+			doc.doctor_id, e.employee_id, u.user_id, u.public_id, u.role, u.is_active,
+			e.department_id, d.department_name, e.first_name, e.last_name,
 			doc.specialization, doc.license_number, doc.consultation_fee
 		FROM Doctors doc
 		JOIN Employees e ON doc.employee_id = e.employee_id
@@ -110,8 +110,8 @@ func (r *DoctorRepository) GetAllDoctors(ctx context.Context, limit, offset int)
 		var d models.Doctor
 		err := rows.Scan(
 			&totalCount,
-			&d.DoctorID, &d.EmployeeID, &d.UserID, &d.PublicID, &d.Email, &d.Role, &d.IsActive,
-			&d.DepartmentID, &d.DepartmentName, &d.FirstName, &d.LastName, &d.Phone, &d.HireDate,
+			&d.DoctorID, &d.EmployeeID, &d.UserID, &d.PublicID, &d.Role, &d.IsActive,
+			&d.DepartmentID, &d.DepartmentName, &d.FirstName, &d.LastName,
 			&d.Specialization, &d.LicenseNumber, &d.ConsultationFee,
 		)
 		if err != nil {
@@ -131,8 +131,8 @@ func (r *DoctorRepository) GetDoctorByID(ctx context.Context, doctorID int) (*mo
 	var d models.Doctor
 	err := tx.QueryRow(ctx, `
 		SELECT 
-			doc.doctor_id, e.employee_id, u.user_id, u.public_id, u.email, u.role, u.is_active,
-			e.department_id, d.department_name, e.first_name, e.last_name, e.phone, e.hire_date,
+			doc.doctor_id, e.employee_id, u.user_id, u.public_id, u.role, u.is_active,
+			e.department_id, d.department_name, e.first_name, e.last_name,
 			doc.specialization, doc.license_number, doc.consultation_fee
 		FROM Doctors doc
 		JOIN Employees e ON doc.employee_id = e.employee_id
@@ -140,8 +140,8 @@ func (r *DoctorRepository) GetDoctorByID(ctx context.Context, doctorID int) (*mo
 		LEFT JOIN Departments d ON e.department_id = d.department_id
 		WHERE doc.doctor_id = $1
 	`, doctorID).Scan(
-		&d.DoctorID, &d.EmployeeID, &d.UserID, &d.PublicID, &d.Email, &d.Role, &d.IsActive,
-		&d.DepartmentID, &d.DepartmentName, &d.FirstName, &d.LastName, &d.Phone, &d.HireDate,
+		&d.DoctorID, &d.EmployeeID, &d.UserID, &d.PublicID, &d.Role, &d.IsActive,
+		&d.DepartmentID, &d.DepartmentName, &d.FirstName, &d.LastName,
 		&d.Specialization, &d.LicenseNumber, &d.ConsultationFee,
 	)
 	if err != nil {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { UserPlus, ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -62,7 +63,12 @@ export function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-lg rounded-3xl border border-border-light bg-surface p-8 shadow-card">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="w-full max-w-lg rounded-3xl border border-border-light bg-surface p-8 shadow-card"
+      >
         <div className="text-center mb-6">
           <div className="flex h-14 w-14 mx-auto items-center justify-center rounded-2xl bg-secondary/10 mb-4">
             <UserPlus className="h-7 w-7 text-secondary" />
@@ -154,7 +160,7 @@ export function RegisterPage() {
 
         <p className="mt-6 text-center text-sm text-muted">
           Already have an account?{' '}
-          <Link to="/login" className="text-secondary hover:underline">
+          <Link to="/login" className="font-semibold text-secondary hover:text-secondary-light hover:underline underline-offset-4">
             Sign in
           </Link>
         </p>
@@ -165,7 +171,7 @@ export function RegisterPage() {
             Back to Home
           </Link>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
