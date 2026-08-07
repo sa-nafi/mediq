@@ -9,6 +9,10 @@ import { PatientPortal } from '@/pages/PatientPortal';
 import { StaffPortal } from '@/pages/StaffPortal';
 import { ServicesPage } from '@/pages/ServicesPage';
 import { TestsPage } from '@/pages/TestsPage';
+import { DoctorsPage } from '@/pages/DoctorsPage';
+import { DoctorDetailsPage } from '@/pages/DoctorDetailsPage';
+import { HealthLibraryPage } from '@/pages/HealthLibraryPage';
+import { AboutPage } from '@/pages/AboutPage';
 
 export default function App() {
   return (
@@ -19,6 +23,10 @@ export default function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/services" element={<ServicesPage />} />
             <Route path="/tests" element={<TestsPage />} />
+            <Route path="/doctors" element={<DoctorsPage />} />
+            <Route path="/doctors/:id" element={<DoctorDetailsPage />} />
+            <Route path="/health-library" element={<HealthLibraryPage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/patient" element={<PatientPortal />} />
             <Route path="/staff" element={<StaffPortal />} />
           </Route>

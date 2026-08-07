@@ -9,11 +9,10 @@ import { cn } from '@/lib/utils';
 import logoSrc from '@/assets/logo.png';
 
 const navLinks = [
-  { label: 'Home', href: '/' },
-  { label: 'Services', href: '/services' },
-  { label: 'Tests & Packages', href: '/tests' },
-  { label: 'About Us', href: '#about' },
-  { label: 'Health Resources', href: '#resources' },
+  { label: 'Doctors', href: '/doctors' },
+  { label: 'Medical Services', href: '/services' },
+  { label: 'Health Library', href: '/health-library' },
+  { label: 'About Noor', href: '/about' },
 ] as const;
 
 export function Navbar() {
@@ -53,11 +52,12 @@ export function Navbar() {
         aria-label="Main navigation"
       >
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 shrink-0" aria-label="MediQ Home">
-          <img src={logoSrc} alt="MediQ Logo" className="h-9 w-9 object-contain" />
-          <span className="text-xl font-bold text-primary hidden sm:inline">
-            Medi<span className="text-secondary">Q</span>
-          </span>
+        <Link to="/" className="flex items-center gap-2.5 shrink-0" aria-label="Noor Healthcare Home">
+          <img src={logoSrc} alt="Noor Healthcare Logo" className="h-9 w-9 object-contain" />
+          <div className="hidden sm:flex flex-col items-start leading-[1.1]">
+            <span className="text-[22px] font-bold text-primary tracking-tight">Noor</span>
+            <span className="text-[13px] font-bold text-secondary uppercase tracking-wider">Healthcare</span>
+          </div>
         </Link>
 
         {/* Desktop Nav */}
@@ -118,9 +118,10 @@ export function Navbar() {
               <SheetHeader>
                 <SheetTitle className="flex items-center gap-2">
                   <img src={logoSrc} alt="" className="h-8 w-8" />
-                  <span className="text-lg font-bold text-primary">
-                    Medi<span className="text-secondary">Q</span>
-                  </span>
+                  <div className="flex flex-col items-start leading-[1.1]">
+                    <span className="text-[22px] font-bold text-primary tracking-tight">Noor</span>
+                    <span className="text-[13px] font-bold text-secondary uppercase tracking-wider">Healthcare</span>
+                  </div>
                 </SheetTitle>
               </SheetHeader>
               <div className="flex flex-col gap-1 px-6 mt-4">

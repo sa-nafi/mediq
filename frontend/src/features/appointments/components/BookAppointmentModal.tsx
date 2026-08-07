@@ -106,7 +106,7 @@ export function BookAppointmentModal() {
                 id="phone"
                 type="tel"
                 icon={<Phone className="h-4 w-4" />}
-                placeholder="+880-XXX-XXXXXXX"
+                placeholder="+8801712341234"
                 {...register('phone')}
               />
               {errors.phone && (

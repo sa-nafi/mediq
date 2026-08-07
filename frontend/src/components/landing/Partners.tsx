@@ -26,11 +26,11 @@ export function Partners() {
           transition={{ duration: 0.4 }}
           className="text-center mb-8"
         >
-          <h2 className="text-lg font-bold text-foreground sm:text-xl">
-            Trusted Healthcare Partners
+          <h2 className="text-xl font-bold text-foreground sm:text-2xl">
+            Trusted by Leading Healthcare Partners
           </h2>
           <p className="mt-1.5 text-sm text-muted">
-            Collaborating with trusted partners to deliver quality diagnostic services
+            Collaborating with trusted partners to deliver the best in healthcare services
           </p>
         </motion.div>
 
