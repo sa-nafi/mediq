@@ -26,7 +26,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	auditRepo := repository.NewAuditRepository()
 
 	// Handlers
-	authHandler := handlers.NewAuthHandler(userRepo, patientRepo, cfg.JWTSecret)
+	authHandler := handlers.NewAuthHandler(userRepo, patientRepo, cfg.JWTSecret, cfg.CookieSecure)
 	employeeHandler := handlers.NewEmployeeHandler(employeeRepo)
 	doctorHandler := handlers.NewDoctorHandler(doctorRepo)
 	departmentHandler := handlers.NewDepartmentHandler(departmentRepo)

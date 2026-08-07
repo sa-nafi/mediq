@@ -39,7 +39,7 @@ SELECT
     e.first_name  AS doctor_first_name,
     e.last_name   AS doctor_last_name,
     a.appointment_date,
-    a.appointment_time,
+    a.serial_number,
     a.status,
     p.patient_id,
     p.first_name  AS patient_first_name,

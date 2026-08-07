@@ -283,7 +283,7 @@ go run cmd/seed/main.go -reset
 
 #### Seeded Accounts & Credentials Summary
 
-All seeded user accounts share the default password: **`password123`**
+All seeded user accounts share the default password: **`test1234`**
 
 | Role | Email | Details |
 | --- | --- | --- |
@@ -349,40 +349,33 @@ Authenticates a user and issues JWT access and refresh tokens.
   }
   ```
 - **Response**: `200 OK`
-  ```json
-  {
-      "access_token": "eyJhbG...",
-      "refresh_token": "eyJhbG..."
-  }
-  ```
+  - **Body**: 
+    ```json
+    {
+        "access_token": "eyJhbG..."
+    }
+    ```
+  - **Headers**: Sets `refresh_token` as an `HttpOnly` cookie.
 
 #### `POST /api/auth/refresh`
 Issues a new access token and rotates the refresh token using a valid, unexpired refresh token.
-- **Auth Required**: No (but requires a valid refresh token in the body)
-- **Request Body**:
-  ```json
-  {
-      "refresh_token": "eyJhbG..."
-  }
-  ```
+- **Auth Required**: No (but requires a valid `refresh_token` cookie)
+- **Request Body**: None
 - **Response**: `200 OK`
-  ```json
-  {
-      "access_token": "eyJhbG...",
-      "refresh_token": "eyJhbG..."
-  }
-  ```
+  - **Body**: 
+    ```json
+    {
+        "access_token": "eyJhbG..."
+    }
+    ```
+  - **Headers**: Updates the `refresh_token` `HttpOnly` cookie.
 
 #### `POST /api/auth/logout`
-Logs the user out by revoking their active refresh token in the database.
-- **Auth Required**: Yes (Bearer Token)
-- **Request Body**:
-  ```json
-  {
-      "refresh_token": "eyJhbG..."
-  }
-  ```
+Logs the user out by revoking their active refresh token in the database and clearing the cookie.
+- **Auth Required**: Yes (Bearer Token and valid `refresh_token` cookie)
+- **Request Body**: None
 - **Response**: `200 OK`
+  - **Headers**: Clears the `refresh_token` cookie.
 
 ---
 
@@ -395,7 +388,7 @@ Create a new employee (e.g., receptionist, lab_tech, admin).
   ```json
   {
       "email": "employee@example.com",
-      "password": "password123",
+      "password": "test1234",
       "role": "receptionist",
       "department_id": 1,         // optional
       "first_name": "Jane",
@@ -446,7 +439,7 @@ Create a new doctor profile.
   ```json
   {
       "email": "doctor@example.com",
-      "password": "password123",
+      "password": "test1234",
       "department_id": 1,         // optional
       "first_name": "Gregory",
       "last_name": "House",

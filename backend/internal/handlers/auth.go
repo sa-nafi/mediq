@@ -14,18 +14,46 @@ import (
 
 // AuthHandler groups all authentication-related HTTP handlers.
 type AuthHandler struct {
-	userRepo    *repository.UserRepository
-	patientRepo *repository.PatientRepository
-	jwtSecret   string
+	userRepo     *repository.UserRepository
+	patientRepo  *repository.PatientRepository
+	jwtSecret    string
+	cookieSecure bool
 }
 
 // NewAuthHandler initializes the AuthHandler.
-func NewAuthHandler(ur *repository.UserRepository, pr *repository.PatientRepository, secret string) *AuthHandler {
+func NewAuthHandler(ur *repository.UserRepository, pr *repository.PatientRepository, secret string, secure bool) *AuthHandler {
 	return &AuthHandler{
-		userRepo:    ur,
-		patientRepo: pr,
-		jwtSecret:   secret,
+		userRepo:     ur,
+		patientRepo:  pr,
+		jwtSecret:    secret,
+		cookieSecure: secure,
 	}
+}
+
+// setRefreshTokenCookie sets the refresh token in an HttpOnly cookie.
+func (h *AuthHandler) setRefreshTokenCookie(w http.ResponseWriter, token string, expires time.Time) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    token,
+		Path:     "/api/auth/",
+		HttpOnly: true,
+		Secure:   h.cookieSecure,
+		SameSite: http.SameSiteLaxMode,
+		Expires:  expires,
+	})
+}
+
+// clearRefreshTokenCookie clears the refresh token cookie.
+func (h *AuthHandler) clearRefreshTokenCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/api/auth/",
+		HttpOnly: true,
+		Secure:   h.cookieSecure,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	})
 }
 
 // RegisterPatientRequest defines the JSON payload for patient registration.
@@ -106,8 +134,7 @@ type LoginRequest struct {
 
 // LoginResponse defines the JSON response containing the tokens.
 type LoginResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken string `json:"access_token"`
 }
 
 // LoginHandler handles POST /auth/login
@@ -150,33 +177,33 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.setRefreshTokenCookie(w, refresh, refreshExp)
+
 	utils.WriteJSON(w, http.StatusOK, LoginResponse{
-		AccessToken:  access,
-		RefreshToken: refresh,
+		AccessToken: access,
 	})
 }
 
 // RefreshRequest defines the JSON payload for token refresh.
+// Deprecated: No longer used as refresh token is read from cookie.
 type RefreshRequest struct {
-	RefreshToken string `json:"refresh_token"`
 }
 
 // RefreshResponse returns the new access token and a rotated refresh token.
 type RefreshResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken string `json:"access_token"`
 }
 
 // RefreshTokenHandler handles POST /api/auth/refresh
 func (h *AuthHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
-	var req RefreshRequest
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576) // 1MB limit
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "Invalid request body")
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		utils.WriteError(w, http.StatusUnauthorized, "Missing refresh token")
 		return
 	}
+	refreshToken := cookie.Value
 
-	claims, err := utils.VerifyToken(req.RefreshToken, []byte(h.jwtSecret))
+	claims, err := utils.VerifyToken(refreshToken, []byte(h.jwtSecret))
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "Invalid refresh token")
 		return
@@ -211,27 +238,29 @@ func (h *AuthHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	h.setRefreshTokenCookie(w, refresh, refreshExp)
+
 	utils.WriteJSON(w, http.StatusOK, RefreshResponse{
-		AccessToken:  access,
-		RefreshToken: refresh,
+		AccessToken: access,
 	})
 }
 
 // LogoutRequest defines the JSON payload for logout.
+// Deprecated: No longer used as refresh token is read from cookie.
 type LogoutRequest struct {
-	RefreshToken string `json:"refresh_token"`
 }
 
 // LogoutHandler handles POST /api/auth/logout
 func (h *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	var req LogoutRequest
-	r.Body = http.MaxBytesReader(w, r.Body, 1048576) // 1MB limit
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.WriteError(w, http.StatusBadRequest, "Invalid request body")
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		// If no token, they are already logged out from client perspective
+		utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Logged out successfully"})
 		return
 	}
+	refreshToken := cookie.Value
 
-	claims, err := utils.VerifyToken(req.RefreshToken, []byte(h.jwtSecret))
+	claims, err := utils.VerifyToken(refreshToken, []byte(h.jwtSecret))
 	if err != nil {
 		utils.WriteError(w, http.StatusUnauthorized, "Invalid refresh token")
 		return
@@ -252,6 +281,8 @@ func (h *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusUnauthorized, "Refresh token is already revoked or invalid")
 		return
 	}
+
+	h.clearRefreshTokenCookie(w)
 
 	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Logged out successfully"})
 }

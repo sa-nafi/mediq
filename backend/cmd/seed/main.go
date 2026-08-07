@@ -64,7 +64,7 @@ func main() {
 	}
 
 	// Helper for hashing
-	hash, err := utils.HashPassword("password123")
+	hash, err := utils.HashPassword("test1234")
 	if err != nil {
 		slog.Error("Failed to hash password", "error", err)
 		os.Exit(1)
@@ -120,7 +120,7 @@ func main() {
 		slog.Error("Failed to insert admin user", "error", err)
 		os.Exit(1)
 	}
-	
+
 	// Create Employee profile for Admin
 	_, err = tx.Exec(ctx, `
 		INSERT INTO Employees (user_id, department_id, first_name, last_name, phone)
@@ -214,7 +214,7 @@ func main() {
 			slog.Error("Failed to insert patient user", "email", pat.email, "error", err)
 			os.Exit(1)
 		}
-		
+
 		_, err = tx.Exec(ctx, "INSERT INTO Patients (user_id, first_name, last_name, date_of_birth, gender, blood_type) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (user_id) DO NOTHING", uid, pat.first, pat.last, pat.dob, pat.gender, pat.blood)
 		if err != nil {
 			slog.Error("Failed to insert patient profile", "email", pat.email, "error", err)
@@ -230,10 +230,10 @@ func main() {
 	slog.Info("Database seeded successfully!")
 	fmt.Println("--------------------------------------------------")
 	fmt.Println("Seed Data Summary:")
-	fmt.Println("Admin: admin@mediq.com / password123")
-	fmt.Println("Receptionist: receptionist@mediq.com / password123")
-	fmt.Println("Lab Techs: labtech1@mediq.com, labtech2@mediq.com / password123")
-	fmt.Println("Doctors: doctor.cardio@mediq.com, doctor.neuro@mediq.com, doctor.ortho@mediq.com, doctor.gen@mediq.com / password123")
-	fmt.Println("Patients: patient1@example.com, patient2@example.com, patient3@example.com / password123")
+	fmt.Println("Admin: admin@mediq.com / test1234")
+	fmt.Println("Receptionist: receptionist@mediq.com / test1234")
+	fmt.Println("Lab Techs: labtech1@mediq.com, labtech2@mediq.com / test1234")
+	fmt.Println("Doctors: doctor.cardio@mediq.com, doctor.neuro@mediq.com, doctor.ortho@mediq.com, doctor.gen@mediq.com / test1234")
+	fmt.Println("Patients: patient1@example.com, patient2@example.com, patient3@example.com / test1234")
 	fmt.Println("--------------------------------------------------")
 }
