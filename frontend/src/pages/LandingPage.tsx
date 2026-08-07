@@ -1,29 +1,21 @@
 import { HeroSection } from '@/components/landing/HeroSection';
-import { TrustStats } from '@/components/landing/TrustStats';
-import { DiagnosticServices } from '@/components/landing/DiagnosticServices';
-import { PopularPackages } from '@/components/landing/PopularPackages';
-import { TestSearch } from '@/components/landing/TestSearch';
+import { ClinicalExcellence } from '@/components/landing/ClinicalExcellence';
+import { DiseaseSearch } from '@/components/landing/DiseaseSearch';
 import { WhyChooseUs } from '@/components/landing/WhyChooseUs';
-import { DigitalReports } from '@/components/landing/DigitalReports';
-import { HowItWorks } from '@/components/landing/HowItWorks';
-import { Testimonials } from '@/components/landing/Testimonials';
+import { PatientVoices } from '@/components/landing/PatientVoices';
 import { Partners } from '@/components/landing/Partners';
-import { FinalCTA } from '@/components/landing/FinalCTA';
+import { QuickActionsCTA } from '@/components/landing/QuickActionsCTA';
 
 export function LandingPage() {
   return (
     <>
       <HeroSection />
-      <TrustStats />
-      <DiagnosticServices />
-      <PopularPackages />
-      <TestSearch />
+      <ClinicalExcellence />
+      <DiseaseSearch />
       <WhyChooseUs />
-      <DigitalReports />
-      <HowItWorks />
-      <Testimonials />
+      <PatientVoices />
       <Partners />
-      <FinalCTA />
+      <QuickActionsCTA />
     </>
   );
 }

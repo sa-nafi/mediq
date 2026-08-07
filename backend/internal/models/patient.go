@@ -14,4 +14,5 @@ type Patient struct {
 	BloodType   *string   `json:"blood_type,omitempty"`
 	Phone       *string   `json:"phone,omitempty"`
 	Address     *string   `json:"address,omitempty"`
+	User        *User     `json:"user,omitempty"`
 }

@@ -2,46 +2,7 @@ import { Link } from 'react-router-dom';
 import { Globe, MessageCircle, Camera, Briefcase, Play, Phone, Mail, MapPin } from 'lucide-react';
 import logoSrc from '@/assets/logo.png';
 
-const footerSections = [
-  {
-    title: 'Corporate',
-    links: [
-      { label: 'About Us', href: '#about' },
-      { label: 'Careers', href: '#' },
-      { label: 'News & Updates', href: '#' },
-      { label: 'Contact Us', href: '#' },
-    ],
-  },
-  {
-    title: 'Diagnostic Services',
-    links: [
-      { label: 'Blood Tests', href: '/services' },
-      { label: 'Imaging & Radiology', href: '/services' },
-      { label: 'Health Checkups', href: '/tests' },
-      { label: 'Cardiac Diagnostics', href: '/services' },
-      { label: 'Pathology', href: '/services' },
-    ],
-  },
-  {
-    title: 'Patient Resources',
-    links: [
-      { label: 'Patient Portal', href: '/patient' },
-      { label: 'Book Appointment', href: '#' },
-      { label: 'Download Reports', href: '#' },
-      { label: 'Health Articles', href: '#resources' },
-      { label: 'FAQs', href: '#' },
-    ],
-  },
-  {
-    title: 'Legal',
-    links: [
-      { label: 'Privacy Policy', href: '#' },
-      { label: 'Terms of Service', href: '#' },
-      { label: 'Refund Policy', href: '#' },
-    ],
-  },
-] as const;
-
+import { useAppointmentStore } from '@/store/appointment-store';
 const socialLinks = [
   { icon: Globe, label: 'Website', href: '#' },
   { icon: MessageCircle, label: 'Twitter', href: '#' },
@@ -51,6 +12,8 @@ const socialLinks = [
 ] as const;
 
 export function Footer() {
+  const openModal = useAppointmentStore((s) => s.openModal);
+
   return (
     <footer className="bg-primary text-white" role="contentinfo">
       {/* Contact Bar */}
@@ -59,23 +22,23 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-6 flex-wrap justify-center">
               <a
-                href="tel:+880XXXXXXXXXX"
+                href="tel:+8801712341234"
                 className="flex items-center gap-2 text-sm text-white/80 hover:text-accent transition-colors"
               >
                 <Phone className="h-4 w-4" />
-                <span>+880-XXX-XXXXXXX</span>
+                <span>+8801712341234</span>
               </a>
               <a
-                href="mailto:info@mediq.example"
+                href="mailto:info@noorhealthcare.com"
                 className="flex items-center gap-2 text-sm text-white/80 hover:text-accent transition-colors"
               >
                 <Mail className="h-4 w-4" />
-                <span>info@mediq.example</span>
+                <span>info@noorhealthcare.com</span>
               </a>
             </div>
             <div className="flex items-center gap-2 text-sm text-white/80">
               <MapPin className="h-4 w-4 shrink-0" />
-              <span>Demo Address, Dhaka, Bangladesh</span>
+              <span>Dhaka, Bangladesh</span>
             </div>
           </div>
         </div>
@@ -86,14 +49,14 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center gap-2.5 mb-4" aria-label="MediQ Home">
+            <Link to="/" className="flex items-center gap-2.5 mb-4" aria-label="Noor Healthcare Home">
               <img src={logoSrc} alt="" className="h-10 w-10 object-contain" />
               <span className="text-2xl font-bold">
-                Medi<span className="text-accent">Q</span>
+                Noor <span className="text-accent">Healthcare</span>
               </span>
             </Link>
             <p className="text-sm text-white/70 leading-relaxed max-w-xs mb-6">
-              MediQ Diagnostic Center is committed to providing accurate, reliable diagnostic services with modern technology and compassionate care.
+              Leading healthcare provider committed to excellence in medical treatment and compassionate care.
             </p>
             <div className="flex items-center gap-3">
               {socialLinks.map((social) => (
@@ -110,25 +73,43 @@ export function Footer() {
           </div>
 
           {/* Link Sections */}
-          {footerSections.map((section) => (
-            <div key={section.title}>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-white/90 mb-4">
-                {section.title}
-              </h3>
-              <ul className="space-y-2.5">
-                {section.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      to={link.href}
-                      className="text-sm text-white/60 hover:text-accent transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 relative z-10 lg:col-span-4">
+            {/* Corporate */}
+            <div>
+              <h3 className="text-white font-bold mb-6 text-lg">Corporate</h3>
+              <ul className="space-y-4">
+                <li><Link to="/about" className="hover:text-white transition-colors">About Noor Healthcare</Link></li>
+                <li><Link to="/contact" className="hover:text-white transition-colors">Contact US</Link></li>
+                <li><Link to="/news" className="hover:text-white transition-colors">News & Events</Link></li>
+                <li><Link to="/careers" className="hover:text-white transition-colors">Careers</Link></li>
               </ul>
             </div>
-          ))}
+
+            {/* Speciality */}
+            <div>
+              <h3 className="text-white font-bold mb-6 text-lg">Speciality</h3>
+              <ul className="space-y-4">
+                <li><Link to="/doctors" className="hover:text-white transition-colors">Cardiac Care</Link></li>
+                <li><Link to="/doctors" className="hover:text-white transition-colors">Dentistry</Link></li>
+                <li><Link to="/doctors" className="hover:text-white transition-colors">Gastrosciences</Link></li>
+                <li><Link to="/doctors" className="hover:text-white transition-colors">Neuroscience</Link></li>
+                <li><Link to="/doctors" className="hover:text-white transition-colors">Orthopaedics</Link></li>
+                <li><Link to="/doctors" className="hover:text-white transition-colors">More Specialities</Link></li>
+              </ul>
+            </div>
+
+            {/* Medical Services */}
+            <div>
+              <h3 className="text-white font-bold mb-6 text-lg">Medical Services</h3>
+              <ul className="space-y-4">
+                <li><Link to="/doctors" className="hover:text-white transition-colors">Find a Doctor</Link></li>
+                <li><button onClick={openModal} className="hover:text-white transition-colors text-left w-full">Book Appointment</button></li>
+                <li><Link to="/health-library" className="hover:text-white transition-colors">Health Library</Link></li>
+                <li><Link to="/services" className="hover:text-white transition-colors">Consultancy</Link></li>
+                <li><Link to="/services" className="hover:text-white transition-colors">Medical Tests</Link></li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -136,8 +117,8 @@ export function Footer() {
       <div className="border-t border-white/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50">
-            <p>&copy; {new Date().getFullYear()} MediQ Diagnostic Center. All rights reserved.</p>
-            <p>Demo project — not a real medical facility.</p>
+            <p>&copy; {new Date().getFullYear()} Noor Healthcare. All rights reserved.</p>
+            <p>Privacy Policy | Terms of Service</p>
           </div>
         </div>
       </div>

@@ -26,7 +26,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	auditRepo := repository.NewAuditRepository()
 
 	// Handlers
-	authHandler := handlers.NewAuthHandler(userRepo, patientRepo, cfg.JWTSecret)
+	authHandler := handlers.NewAuthHandler(userRepo, patientRepo, cfg.JWTSecret, cfg.CookieSecure)
 	employeeHandler := handlers.NewEmployeeHandler(employeeRepo)
 	doctorHandler := handlers.NewDoctorHandler(doctorRepo)
 	departmentHandler := handlers.NewDepartmentHandler(departmentRepo)
@@ -71,12 +71,12 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 
 	// Doctor Routes
 	mux.Handle("POST /api/doctors", allow("admin")(doctorHandler.CreateDoctorHandler))
-	mux.Handle("GET /api/doctors", allow("admin")(doctorHandler.GetDoctorsHandler))
-	mux.Handle("GET /api/doctors/{id}", allow("admin")(doctorHandler.GetDoctorByIDHandler))
+	mux.Handle("GET /api/doctors", allow("patient", "doctor", "receptionist", "admin")(doctorHandler.GetDoctorsHandler))
+	mux.Handle("GET /api/doctors/{id}", allow("patient", "doctor", "receptionist", "admin")(doctorHandler.GetDoctorByIDHandler))
 	mux.Handle("PUT /api/doctors/{id}", allow("admin")(doctorHandler.UpdateDoctorHandler))
 	mux.Handle("DELETE /api/doctors/{id}", allow("admin")(doctorHandler.DeleteDoctorHandler))
 
-	mux.Handle("GET /api/doctors/{id}/schedules", allow("admin")(doctorHandler.GetDoctorSchedulesHandler))
+	mux.Handle("GET /api/doctors/{id}/schedules", allow("patient", "doctor", "receptionist", "admin")(doctorHandler.GetDoctorSchedulesHandler))
 	mux.Handle("PUT /api/doctors/{id}/schedules", allow("admin")(doctorHandler.UpdateDoctorSchedulesHandler))
 
 	mux.Handle("GET /api/doctors/{id}/availability", allow("patient", "doctor", "receptionist", "admin")(doctorHandler.GetDoctorAvailabilityHandler))
@@ -100,6 +100,8 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	mux.Handle("DELETE /api/medicines/{id}", allow("admin")(medicineHandler.DeleteMedicineHandler))
 
 	// Patient Routes
+	mux.Handle("GET /api/patients/me", allow("patient")(patientHandler.GetMyPatientProfileHandler))
+	mux.Handle("PUT /api/patients/me", allow("patient")(patientHandler.UpdateMyPatientProfileHandler))
 	mux.Handle("GET /api/patients", allow("receptionist", "doctor", "admin")(patientHandler.GetPatientsHandler))
 	mux.Handle("GET /api/patients/{id}", allow("patient", "doctor", "receptionist", "admin")(patientHandler.GetPatientByIDHandler))
 	mux.Handle("PUT /api/patients/{id}", allow("patient", "admin")(patientHandler.UpdatePatientHandler))
@@ -118,7 +120,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 
 	// Medical Test Routes
 	mux.Handle("POST /api/medical-tests", allow("doctor")(medicalTestHandler.OrderMedicalTestHandler))
-	mux.Handle("GET /api/medical-tests", allow("lab_tech", "admin")(medicalTestHandler.GetTestsHandler))
+	mux.Handle("GET /api/medical-tests", allow("patient", "doctor", "lab_tech", "admin")(medicalTestHandler.GetTestsHandler))
 	mux.Handle("GET /api/medical-tests/{id}", allow("patient", "doctor", "lab_tech", "admin")(medicalTestHandler.GetTestByIDHandler))
 	mux.Handle("PUT /api/medical-tests/{id}", allow("lab_tech")(medicalTestHandler.UpdateMedicalTestHandler))
 

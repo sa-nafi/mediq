@@ -31,4 +31,8 @@ type Appointment struct {
 	Type            AppointmentType   `json:"type"`
 	Notes           string            `json:"notes,omitempty"`
 	CreatedAt       time.Time         `json:"created_at"`
+
+	// Joined relations
+	Doctor  *Doctor  `json:"doctor,omitempty"`
+	Patient *Patient `json:"patient,omitempty"`
 }

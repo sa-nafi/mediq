@@ -23,6 +23,7 @@ type Config struct {
 	DBMaxConnIdleTime string
 	JWTSecret         string
 	CORSAllowedOrigin string
+	CookieSecure      bool
 }
 
 // Load loads configuration from environment variables, optionally reading from a .env file first.
@@ -49,6 +50,7 @@ func Load() (*Config, error) {
 		DBMaxConnIdleTime: getEnv("DB_MAX_CONN_IDLE_TIME", "30m"),
 		JWTSecret:         getEnv("JWT_SECRET", ""),
 		CORSAllowedOrigin: getEnv("ALLOWED_ORIGIN", "http://localhost:5173"),
+		CookieSecure:      getEnv("COOKIE_SECURE", "false") == "true",
 	}
 
 	if err := validate(cfg); err != nil {

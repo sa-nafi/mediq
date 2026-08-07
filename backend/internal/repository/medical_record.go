@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/sa-nafi/mediq/backend/internal/db"
 	"github.com/sa-nafi/mediq/backend/internal/models"
@@ -49,69 +50,83 @@ func (r *MedicalRecordRepository) CreateMedicalRecord(ctx context.Context, docto
 	return recordID, nil
 }
 
-// GetMedicalRecords retrieves medical records with optional filtering based on role.
-func (r *MedicalRecordRepository) GetMedicalRecords(ctx context.Context, role string, userID int, filterPatientID *int) ([]models.MedicalRecord, error) {
+// GetMedicalRecords retrieves medical records with optional filtering based on role, with pagination.
+func (r *MedicalRecordRepository) GetMedicalRecords(ctx context.Context, role string, userID int, filterPatientID *int, limit, offset int) ([]models.MedicalRecord, int, error) {
 	tx := db.TxFromContext(ctx)
 	if tx == nil {
-		return nil, errors.New("transaction not found in context")
+		return nil, 0, errors.New("transaction not found in context")
 	}
 
-	query := `
-		SELECT record_id, patient_id, doctor_id, appointment_id, record_date, diagnosis, treatment, notes
-		FROM Medical_Records
+	baseQuery := `
+		FROM Medical_Records mr
+		JOIN Doctors d ON mr.doctor_id = d.doctor_id
+		JOIN Employees e ON d.employee_id = e.employee_id
 		WHERE 1=1
 	`
 	args := []interface{}{}
 	argIndex := 1
 
-	if role == "patient" {
-		// Resolve patient_id from userID
-		var patientID int
-		err := tx.QueryRow(ctx, `SELECT patient_id FROM Patients WHERE user_id = $1`, userID).Scan(&patientID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to resolve patient ID: %w", err)
-		}
-		query += fmt.Sprintf(" AND patient_id = $%d", argIndex)
-		args = append(args, patientID)
+	switch role {
+	case "patient":
+		baseQuery += fmt.Sprintf(" AND mr.patient_id = (SELECT patient_id FROM Patients WHERE user_id = $%d)", argIndex)
+		args = append(args, userID)
 		argIndex++
-	} else if filterPatientID != nil {
-		// For doctors and admins, allow filtering by patient
-		query += fmt.Sprintf(" AND patient_id = $%d", argIndex)
+	case "doctor":
+		baseQuery += fmt.Sprintf(" AND mr.doctor_id = (SELECT doctor_id FROM Doctors JOIN Employees emp ON Doctors.employee_id = emp.employee_id WHERE emp.user_id = $%d)", argIndex)
+		args = append(args, userID)
+		argIndex++
+	}
+
+	if filterPatientID != nil {
+		baseQuery += fmt.Sprintf(" AND mr.patient_id = $%d", argIndex)
 		args = append(args, *filterPatientID)
 		argIndex++
 	}
 
-	query += " ORDER BY record_date DESC, record_id DESC"
+	// Get total count
+	var totalCount int
+	countQuery := `SELECT COUNT(*) ` + baseQuery
+	if err := tx.QueryRow(ctx, countQuery, args...).Scan(&totalCount); err != nil {
+		return nil, 0, err
+	}
+
+	query := `
+		SELECT mr.record_id, mr.patient_id, mr.doctor_id, mr.appointment_id, mr.record_date, mr.diagnosis, mr.treatment, mr.notes,
+		       e.first_name AS doc_first, e.last_name AS doc_last, e.phone AS doc_phone, d.specialization
+	` + baseQuery
+	
+	query += ` ORDER BY mr.record_date DESC LIMIT $` + strconv.Itoa(argIndex) + ` OFFSET $` + strconv.Itoa(argIndex+1)
+	args = append(args, limit, offset)
 
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query medical records: %w", err)
+		return nil, 0, err
 	}
 	defer rows.Close()
 
 	var records []models.MedicalRecord
 	for rows.Next() {
-		var m models.MedicalRecord
+		var r models.MedicalRecord
+		var doc models.Doctor
 		if err := rows.Scan(
-			&m.RecordID,
-			&m.PatientID,
-			&m.DoctorID,
-			&m.AppointmentID,
-			&m.RecordDate,
-			&m.Diagnosis,
-			&m.Treatment,
-			&m.Notes,
+			&r.RecordID, &r.PatientID, &r.DoctorID, &r.AppointmentID, &r.RecordDate, &r.Diagnosis, &r.Treatment, &r.Notes,
+			&doc.FirstName, &doc.LastName, &doc.Phone, &doc.Specialization,
 		); err != nil {
-			return nil, fmt.Errorf("failed to scan medical record: %w", err)
+			return nil, 0, err
 		}
-		records = append(records, m)
+		r.Doctor = &doc
+		records = append(records, r)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, 0, err
 	}
 
 	if records == nil {
 		records = []models.MedicalRecord{}
 	}
 
-	return records, nil
+	return records, totalCount, nil
 }
 
 // GetMedicalRecordByID retrieves a single medical record.
