@@ -27,7 +27,6 @@ import { PatientProfilePage } from '@/pages/patient/ProfilePage';
 import { PatientMedicalRecordsPage } from '@/pages/patient/MedicalRecordsPage';
 import { PatientPrescriptionsPage } from '@/pages/patient/PrescriptionsPage';
 import { PatientTestsPage } from '@/pages/patient/MedicalTestsPage';
-import { PatientMedicinesPage } from '@/pages/patient/MedicinesPage';
 import { StaffPortal } from '@/pages/StaffPortal';
 
 export default function App() {
@@ -78,7 +77,6 @@ export default function App() {
               <Route path="/patient/records" element={<PatientMedicalRecordsPage />} />
               <Route path="/patient/prescriptions" element={<PatientPrescriptionsPage />} />
               <Route path="/patient/medical-tests" element={<PatientTestsPage />} />
-              <Route path="/patient/medicines" element={<PatientMedicinesPage />} />
             </Route>
           </Route>
 

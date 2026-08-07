@@ -89,13 +89,15 @@ func (h *MedicalRecordHandler) GetMedicalRecordsHandler(w http.ResponseWriter, r
 		}
 	}
 
-	records, err := h.repo.GetMedicalRecords(r.Context(), role, userID, filterPatientID)
+	page, limit, offset := utils.ParsePaginationParams(r)
+
+	records, totalCount, err := h.repo.GetMedicalRecords(r.Context(), role, userID, filterPatientID, limit, offset)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve medical records")
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, records)
+	utils.WritePaginatedJSON(w, http.StatusOK, records, totalCount, page, limit)
 }
 
 func (h *MedicalRecordHandler) GetMedicalRecordByIDHandler(w http.ResponseWriter, r *http.Request) {

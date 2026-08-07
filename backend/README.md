@@ -626,6 +626,17 @@ Delete a medicine from the catalog.
 
 ### Patients
 
+#### `GET /api/patients/me`
+Get the current logged-in patient's profile.
+- **Auth Required**: Yes (Patient)
+- **Response**: `200 OK`
+
+#### `PUT /api/patients/me`
+Update the current logged-in patient's profile.
+- **Auth Required**: Yes (Patient)
+- **Request Body**: Same as `PUT /api/patients/{id}`
+- **Response**: `200 OK`
+
 #### `GET /api/patients`
 Get a paginated list of patients. Supports `?limit` and `?offset`.
 - **Auth Required**: Yes (Receptionist, Doctor, Admin)
@@ -742,7 +753,7 @@ Order a new medical test.
 
 #### `GET /api/medical-tests`
 Get a paginated list of medical tests. Supports `?limit` and `?offset`.
-- **Auth Required**: Yes (Lab Tech, Admin)
+- **Auth Required**: Yes (Patient, Doctor, Lab Tech, Admin)
 - **Response**: `200 OK`
 
 #### `GET /api/medical-tests/{id}`

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { Pill, AlertCircle, FileStack, ExternalLink, Clock, Printer, Download, Stethoscope, ChevronRight } from 'lucide-react';
+import { Pill, AlertCircle, FileStack, ExternalLink, Clock, Printer, Stethoscope, ChevronRight } from 'lucide-react';
 import { patientApi } from '@/api/patient';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,9 +13,12 @@ import {
 } from '@/components/ui/dialog';
 
 export function PatientPrescriptionsPage() {
-  const { data: prescriptions, isLoading, error } = useQuery({
-    queryKey: ['patient', 'prescriptions'],
-    queryFn: patientApi.getPrescriptions,
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  const { data: prescriptionsData, isLoading, error } = useQuery({
+    queryKey: ['patient', 'prescriptions', { page, limit }],
+    queryFn: () => patientApi.getPrescriptions({ page, limit }),
   });
 
   const [selectedRxId, setSelectedRxId] = useState<number | null>(null);
@@ -52,11 +55,11 @@ export function PatientPrescriptionsPage() {
           <p className="text-base font-bold">Failed to load prescriptions.</p>
           <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="mt-1 rounded-lg">Try Again</Button>
         </div>
-      ) : prescriptions && prescriptions.length > 0 ? (
+      ) : prescriptionsData?.data && prescriptionsData.data.length > 0 ? (
         <div className="grid grid-cols-1 gap-3 print:hidden">
-          {prescriptions.map((rx: any) => (
-            <div 
-              key={rx.prescription_id} 
+          {prescriptionsData.data.map((rx: any) => (
+            <div
+              key={rx.prescription_id}
               className="bg-surface rounded-xl p-4 shadow-sm border border-border-light flex items-center justify-between cursor-pointer hover:border-rose-200 hover:shadow transition-all group"
               onClick={() => setSelectedRxId(rx.prescription_id)}
             >
@@ -93,6 +96,30 @@ export function PatientPrescriptionsPage() {
         </div>
       )}
 
+      {prescriptionsData?.total_pages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-6 print:hidden">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm font-medium text-muted">
+            Page {page} of {prescriptionsData.total_pages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(p => Math.min(prescriptionsData.total_pages, p + 1))}
+            disabled={page >= prescriptionsData.total_pages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
+
       {/* Screen Modal for Details */}
       <Dialog open={!!selectedRxId} onOpenChange={(open) => !open && setSelectedRxId(null)}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto rounded-2xl p-0 overflow-hidden border-none shadow-xl print:hidden">
@@ -119,7 +146,7 @@ export function PatientPrescriptionsPage() {
                   </DialogDescription>
                 </DialogHeader>
               </div>
-              
+
               <div className="p-6 space-y-6 bg-surface">
                 <div className="flex items-center justify-between p-4 bg-blue-50/50 rounded-xl border border-blue-100/50 shadow-sm">
                   <div className="flex items-center gap-3">
@@ -161,9 +188,9 @@ export function PatientPrescriptionsPage() {
                           <div className="flex items-center gap-2 mb-1">
                             <h5 className="font-extrabold text-foreground text-base">{item.medicine_name}</h5>
                             {item.medicine_info_link && (
-                              <a 
-                                href={item.medicine_info_link} 
-                                target="_blank" 
+                              <a
+                                href={item.medicine_info_link}
+                                target="_blank"
                                 rel="noreferrer"
                                 className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20 hover:bg-primary hover:text-white transition-colors ml-1"
                                 title="View Medicine Info"
@@ -195,12 +222,12 @@ export function PatientPrescriptionsPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="px-6 py-4 border-t border-border-light bg-background flex justify-between items-center sm:hidden">
-                 <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 rounded-lg">
-                    <Printer className="h-4 w-4" /> Print
-                 </Button>
-                 <Button size="sm" onClick={() => setSelectedRxId(null)} className="rounded-lg px-6">Close</Button>
+                <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 rounded-lg">
+                  <Printer className="h-4 w-4" /> Print
+                </Button>
+                <Button size="sm" onClick={() => setSelectedRxId(null)} className="rounded-lg px-6">Close</Button>
               </div>
               <div className="px-6 py-4 border-t border-border-light bg-background justify-end items-center hidden sm:flex">
                 <Button size="sm" onClick={() => setSelectedRxId(null)} className="rounded-lg px-6 shadow-sm">Close</Button>
@@ -281,7 +308,7 @@ export function PatientPrescriptionsPage() {
                 <p className="text-[10px] text-gray-600 mt-0.5">Dr. {rxDetail.doctor_first_name} {rxDetail.doctor_last_name}</p>
               </div>
             </div>
-            
+
             <div className="mt-6 text-center text-[10px] text-gray-400 font-medium">
               This is a digitally generated prescription.
             </div>

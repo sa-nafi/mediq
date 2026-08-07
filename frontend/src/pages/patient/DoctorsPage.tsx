@@ -10,10 +10,10 @@ export function PatientDoctorsPage() {
 
   const { data: doctors, isLoading, error } = useQuery({
     queryKey: ['patient', 'doctors'],
-    queryFn: patientApi.getDoctors,
+    queryFn: () => patientApi.getDoctors(),
   });
 
-  const filteredDoctors = doctors?.filter((doc: any) => 
+  const filteredDoctors = (doctors as any[])?.filter((doc: any) => 
     `${doc.first_name} ${doc.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) || 
     doc.department?.name.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];

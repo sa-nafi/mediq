@@ -44,7 +44,7 @@ export function ServicesPage() {
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold text-[#1a3a40] sm:text-5xl mb-6"
+            className="text-3xl font-bold text-[#1a3a40] sm:text-4xl mb-6"
           >
             Our Medical Services
           </motion.h1>
@@ -64,9 +64,9 @@ export function ServicesPage() {
             <motion.div
               key={service.title}
               initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-gray-50 rounded-[2rem] p-8 border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+              animate={{ opacity: 1, y: 0, transition: { delay: index * 0.1 } }}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className="bg-gray-50 rounded-[2rem] p-8 border border-gray-100 hover:shadow-lg transition-shadow duration-300"
             >
               <div className="bg-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm mb-6">
                 {service.icon}

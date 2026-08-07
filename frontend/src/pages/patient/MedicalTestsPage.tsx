@@ -13,9 +13,12 @@ import {
 } from '@/components/ui/dialog';
 
 export function PatientTestsPage() {
-  const { data: tests, isLoading, error } = useQuery({
-    queryKey: ['patient', 'tests'],
-    queryFn: patientApi.getTests,
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  const { data: testsData, isLoading, error } = useQuery({
+    queryKey: ['patient', 'tests', { page, limit }],
+    queryFn: () => patientApi.getTests({ page, limit }),
   });
 
   const [selectedTest, setSelectedTest] = useState<any>(null);
@@ -47,9 +50,9 @@ export function PatientTestsPage() {
           <p className="text-base font-bold">Failed to load medical tests.</p>
           <Button variant="outline" size="sm" onClick={() => window.location.reload()} className="mt-1 rounded-lg">Try Again</Button>
         </div>
-      ) : tests && tests.length > 0 ? (
+      ) : testsData?.data && testsData.data.length > 0 ? (
         <div className="grid grid-cols-1 gap-3">
-          {tests.map((test: any) => (
+          {testsData.data.map((test: any) => (
             <div 
               key={test.test_id} 
               className="bg-surface rounded-xl p-4 shadow-sm border border-border-light flex items-center justify-between cursor-pointer hover:border-purple-200 hover:shadow transition-all group"
@@ -89,6 +92,30 @@ export function PatientTestsPage() {
           <p className="text-muted mt-2 text-sm max-w-sm mx-auto">
             You don't have any recent medical tests or diagnostic reports.
           </p>
+        </div>
+      )}
+
+      {testsData?.total_pages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm font-medium text-muted">
+            Page {page} of {testsData.total_pages}
+          </span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setPage(p => Math.min(testsData.total_pages, p + 1))}
+            disabled={page >= testsData.total_pages}
+          >
+            Next
+          </Button>
         </div>
       )}
 

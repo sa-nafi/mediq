@@ -1,8 +1,24 @@
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Shield } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LogOut, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { authApi } from '@/api/auth';
+import { useAuthStore } from '@/store/auth-store';
 
 export function StaffPortal() {
+  const navigate = useNavigate();
+  const clearAuth = useAuthStore(state => state.clearAuth);
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      clearAuth();
+      navigate('/login');
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 pt-20">
       <div className="text-center max-w-md">
@@ -14,10 +30,8 @@ export function StaffPortal() {
           The staff portal is under development. Receptionists, doctors, and lab technicians will access their workflows here.
         </p>
         <div className="mt-6">
-          <Button variant="outline" asChild>
-            <Link to="/" className="gap-2">
-              <ArrowLeft className="h-4 w-4" /> Back to Home
-            </Link>
+          <Button variant="outline" onClick={handleLogout} className="gap-2">
+            <LogOut className="h-4 w-4" /> Logout
           </Button>
         </div>
       </div>

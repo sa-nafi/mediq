@@ -64,31 +64,19 @@ func (h *MedicalTestHandler) OrderMedicalTestHandler(w http.ResponseWriter, r *h
 
 func (h *MedicalTestHandler) GetTestsHandler(w http.ResponseWriter, r *http.Request) {
 	status := r.URL.Query().Get("status")
-	
-	offset := 0
-	if offsetStr := r.URL.Query().Get("offset"); offsetStr != "" {
-		if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
-			offset = o
-		}
-	}
 
-	limit := 50
-	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
-		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
-			limit = l
-		}
-	}
+	page, limit, offset := utils.ParsePaginationParams(r)
 
 	role, _ := r.Context().Value(middleware.RoleKey).(string)
 	userID, _ := r.Context().Value(middleware.UserIDKey).(int)
 
-	tests, err := h.repo.GetTests(r.Context(), status, role, userID, offset, limit)
+	tests, totalCount, err := h.repo.GetTests(r.Context(), status, role, userID, offset, limit)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve tests")
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, tests)
+	utils.WritePaginatedJSON(w, http.StatusOK, tests, totalCount, page, limit)
 }
 
 func (h *MedicalTestHandler) GetTestByIDHandler(w http.ResponseWriter, r *http.Request) {

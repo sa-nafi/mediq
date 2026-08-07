@@ -40,14 +40,14 @@ export function LoginPage() {
       const res = await authApi.login(data);
       if (res.access_token) {
         setAccessToken(res.access_token);
-        
+
         // After token is set, authStore will decode and set `user`.
         // The user might not be synchronously available in the state if we just read it,
         // but `useAuthStore.getState().user` will have it.
         const user = useAuthStore.getState().user;
-        
+
         toast.success('Logged in successfully');
-        
+
         const from = location.state?.from?.pathname;
         if (from) {
           navigate(from, { replace: true });
@@ -87,10 +87,10 @@ export function LoginPage() {
             <label htmlFor="login-email" className="block text-sm font-medium text-foreground mb-1.5">
               Email
             </label>
-            <Input 
-              id="login-email" 
-              type="email" 
-              placeholder="you@example.com" 
+            <Input
+              id="login-email"
+              type="email"
+              placeholder="you@example.com"
               {...register('email')}
             />
             {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
@@ -99,10 +99,10 @@ export function LoginPage() {
             <label htmlFor="login-password" className="block text-sm font-medium text-foreground mb-1.5">
               Password
             </label>
-            <Input 
-              id="login-password" 
-              type="password" 
-              placeholder="Enter your password" 
+            <Input
+              id="login-password"
+              type="password"
+              placeholder="Enter your password"
               {...register('password')}
             />
             {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>}

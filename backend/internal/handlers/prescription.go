@@ -110,25 +110,13 @@ func (h *PrescriptionHandler) GetPrescriptionsHandler(w http.ResponseWriter, r *
 		}
 	}
 
-	limit := 50
-	if l := r.URL.Query().Get("limit"); l != "" {
-		if parsedLimit, err := strconv.Atoi(l); err == nil && parsedLimit > 0 {
-			limit = parsedLimit
-		}
-	}
+	page, limit, offset := utils.ParsePaginationParams(r)
 
-	offset := 0
-	if o := r.URL.Query().Get("offset"); o != "" {
-		if parsedOffset, err := strconv.Atoi(o); err == nil && parsedOffset >= 0 {
-			offset = parsedOffset
-		}
-	}
-
-	summaries, err := h.repo.GetPrescriptions(r.Context(), filterUserID, filterPatientID, filterDoctorID, limit, offset)
+	summaries, totalCount, err := h.repo.GetPrescriptions(r.Context(), filterUserID, filterPatientID, filterDoctorID, limit, offset)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve prescriptions")
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, summaries)
+	utils.WritePaginatedJSON(w, http.StatusOK, summaries, totalCount, page, limit)
 }

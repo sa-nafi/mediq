@@ -81,14 +81,14 @@ export function PatientVoices() {
             className="lg:w-2/3 flex gap-6 overflow-x-auto pb-6 pt-4 snap-x snap-mandatory px-4 -mx-4 lg:px-0 lg:mx-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
           >
             {patients.map((patient, idx) => (
-              <motion.div
-                key={patient.id}
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
-                className="relative shrink-0 w-[280px] sm:w-[320px] rounded-[2rem] bg-white p-8 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] hover:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.25)] transition-shadow snap-start flex flex-col justify-between group"
-              >
+              <div key={patient.id} className="snap-start shrink-0 flex">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  className="relative w-[280px] sm:w-[320px] rounded-[2rem] bg-white p-8 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] hover:shadow-[0_10px_40px_-10px_rgba(0,0,0,0.25)] transition-shadow flex flex-col justify-between group"
+                >
                 <div>
                   <Quote className="h-10 w-10 text-secondary/20 mb-4 transition-transform group-hover:scale-110 group-hover:text-secondary/40" />
                   <div className="flex text-amber-400 mb-4 gap-0.5">
@@ -104,6 +104,7 @@ export function PatientVoices() {
                    <p className="text-sm text-muted">{patient.type}</p>
                 </div>
               </motion.div>
+              </div>
             ))}
           </div>
         </div>

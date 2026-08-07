@@ -13,9 +13,12 @@ import {
 } from '@/components/ui/dialog';
 
 export function PatientMedicalRecordsPage() {
-  const { data: records, isLoading, error } = useQuery({
-    queryKey: ['patient', 'records'],
-    queryFn: patientApi.getMedicalRecords,
+  const [page, setPage] = useState(1);
+  const limit = 10;
+
+  const { data: recordsData, isLoading, error } = useQuery({
+    queryKey: ['patient', 'records', { page, limit }],
+    queryFn: () => patientApi.getMedicalRecords({ page, limit }),
   });
 
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
@@ -39,9 +42,9 @@ export function PatientMedicalRecordsPage() {
           <p>Failed to load medical records.</p>
           <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Try Again</Button>
         </div>
-      ) : records && records.length > 0 ? (
+      ) : recordsData?.data && recordsData.data.length > 0 ? (
         <div className="grid grid-cols-1 gap-4">
-          {records.map((record: any) => (
+          {recordsData.data.map((record: any) => (
             <div 
               key={record.id} 
               className="bg-surface rounded-xl p-4 shadow-sm border border-border-light flex items-center justify-between cursor-pointer hover:border-blue-200 hover:shadow transition-all group"
@@ -78,6 +81,30 @@ export function PatientMedicalRecordsPage() {
           <p className="text-muted mt-2 text-sm max-w-sm mx-auto">
             You don't have any medical records in the system yet. Records are created by doctors during your consultation.
           </p>
+        </div>
+      )}
+
+      {recordsData?.total_pages > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm font-medium text-muted">
+            Page {page} of {recordsData.total_pages}
+          </span>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setPage(p => Math.min(recordsData.total_pages, p + 1))}
+            disabled={page >= recordsData.total_pages}
+          >
+            Next
+          </Button>
         </div>
       )}
 

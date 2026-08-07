@@ -31,8 +31,8 @@ export const patientApi = {
   },
 
   // Doctors
-  getDoctors: async () => {
-    const res = await apiClient.get('/doctors');
+  getDoctors: async (params?: { limit?: number; page?: number; offset?: number }) => {
+    const res = await apiClient.get('/doctors', { params });
     return res.data.data || res.data;
   },
   getDoctorSchedules: async (doctorId: number) => {
@@ -46,13 +46,13 @@ export const patientApi = {
   },
 
   // Records & Tests
-  getMedicalRecords: async () => {
-    const res = await apiClient.get('/medical-records');
-    return res.data.data || res.data; // medical records is currently not paginated, so res.data will be the array
+  getMedicalRecords: async (params?: { limit?: number; page?: number }) => {
+    const res = await apiClient.get('/medical-records', { params });
+    return res.data; // Now returns paginated object { data: [], total_count, ... }
   },
-  getTests: async () => {
-    const res = await apiClient.get('/medical-tests');
-    return res.data.data || res.data;
+  getTests: async (params?: { limit?: number; page?: number }) => {
+    const res = await apiClient.get('/medical-tests', { params });
+    return res.data; // Returns paginated object { data: [], total_count, page, limit, total_pages }
   },
   getMedicalRecordById: async (id: number) => {
     const res = await apiClient.get(`/medical-records/${id}`);
@@ -64,23 +64,12 @@ export const patientApi = {
   },
 
   // Prescriptions
-  getPrescriptions: async () => {
-    const res = await apiClient.get('/prescriptions');
-    return res.data.data || res.data;
+  getPrescriptions: async (params?: { limit?: number; page?: number }) => {
+    const res = await apiClient.get('/prescriptions', { params });
+    return res.data; // Returns paginated object { data: [], total_count, page, limit, total_pages }
   },
   getPrescriptionById: async (id: number) => {
     const res = await apiClient.get(`/prescriptions/${id}`);
-    return res.data;
-  },
-
-  // Medicines
-  getMedicines: async (search?: string) => {
-    const url = search ? `/medicines?search=${encodeURIComponent(search)}` : '/medicines';
-    const res = await apiClient.get(url);
-    return res.data.data || res.data;
-  },
-  getMedicineById: async (id: number) => {
-    const res = await apiClient.get(`/medicines/${id}`);
     return res.data;
   },
 };

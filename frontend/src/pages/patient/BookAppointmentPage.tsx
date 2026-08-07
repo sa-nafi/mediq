@@ -20,10 +20,10 @@ export function BookAppointmentPage() {
   // Fetch doctors to get doctor details
   const { data: doctors } = useQuery({
     queryKey: ['patient', 'doctors'],
-    queryFn: patientApi.getDoctors,
+    queryFn: () => patientApi.getDoctors(),
   });
   
-  const doctor = doctors?.find((d: any) => d.doctor_id === doctorId);
+  const doctor = (doctors as any[])?.find((d: any) => d.doctor_id === doctorId);
 
   // Fetch doctor schedules
   const { data: schedules, isLoading: loadingSchedules } = useQuery({

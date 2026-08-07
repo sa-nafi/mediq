@@ -126,15 +126,10 @@ func (r *PrescriptionRepository) GetPrescriptionByID(ctx context.Context, id int
 }
 
 // GetPrescriptions retrieves a summary list of prescriptions, optionally filtered.
-func (r *PrescriptionRepository) GetPrescriptions(ctx context.Context, filterUserID, filterPatientID, filterDoctorID *int, limit, offset int) ([]models.PrescriptionSummary, error) {
+func (r *PrescriptionRepository) GetPrescriptions(ctx context.Context, filterUserID, filterPatientID, filterDoctorID *int, limit, offset int) ([]models.PrescriptionSummary, int, error) {
 	tx := db.TxFromContext(ctx)
 
-	query := `
-		SELECT 
-			pr.prescription_id, pr.appointment_id, pr.prescription_date,
-			e.first_name AS doctor_first_name, e.last_name AS doctor_last_name,
-			mr.patient_id, p.first_name AS patient_first_name, p.last_name AS patient_last_name,
-			mr.record_id, mr.diagnosis
+	baseQuery := `
 		FROM Prescriptions pr
 		JOIN Doctors doc ON doc.doctor_id = pr.doctor_id
 		JOIN Employees e ON e.employee_id = doc.employee_id
@@ -146,27 +141,42 @@ func (r *PrescriptionRepository) GetPrescriptions(ctx context.Context, filterUse
 	argIndex := 1
 
 	if filterUserID != nil {
-		query += fmt.Sprintf(" AND p.user_id = $%d", argIndex)
+		baseQuery += fmt.Sprintf(" AND p.user_id = $%d", argIndex)
 		args = append(args, *filterUserID)
 		argIndex++
 	}
 	if filterPatientID != nil {
-		query += fmt.Sprintf(" AND p.patient_id = $%d", argIndex)
+		baseQuery += fmt.Sprintf(" AND p.patient_id = $%d", argIndex)
 		args = append(args, *filterPatientID)
 		argIndex++
 	}
 	if filterDoctorID != nil {
-		query += fmt.Sprintf(" AND pr.doctor_id = $%d", argIndex)
+		baseQuery += fmt.Sprintf(" AND pr.doctor_id = $%d", argIndex)
 		args = append(args, *filterDoctorID)
 		argIndex++
 	}
+
+	// Get total count
+	var totalCount int
+	countQuery := `SELECT COUNT(*) ` + baseQuery
+	if err := tx.QueryRow(ctx, countQuery, args...).Scan(&totalCount); err != nil {
+		return nil, 0, fmt.Errorf("failed to count prescriptions: %w", err)
+	}
+
+	query := `
+		SELECT 
+			pr.prescription_id, pr.appointment_id, pr.prescription_date,
+			e.first_name AS doctor_first_name, e.last_name AS doctor_last_name,
+			mr.patient_id, p.first_name AS patient_first_name, p.last_name AS patient_last_name,
+			mr.record_id, mr.diagnosis
+	` + baseQuery
 
 	query += fmt.Sprintf(" ORDER BY pr.prescription_date DESC, pr.prescription_id DESC LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
 	args = append(args, limit, offset)
 
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -179,16 +189,16 @@ func (r *PrescriptionRepository) GetPrescriptions(ctx context.Context, filterUse
 			&s.PatientID, &s.PatientFirstName, &s.PatientLastName,
 			&s.RecordID, &s.Diagnosis,
 		); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		summaries = append(summaries, s)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return summaries, nil
+	return summaries, totalCount, nil
 }
 
 // VerifyPrescriptionOwnership checks if a prescription belongs to the given user (who is a patient).

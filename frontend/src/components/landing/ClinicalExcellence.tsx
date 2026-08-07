@@ -35,10 +35,10 @@ export function ClinicalExcellence() {
               <motion.div
                 key={spec.id}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                whileInView={{ opacity: 1, y: 0, transition: { delay: idx * 0.05, duration: 0.5 } }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.05, duration: 0.5 }}
-                className="flex items-start gap-4 p-6 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-hover hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="flex items-start gap-4 p-6 rounded-2xl bg-surface border border-border-light shadow-soft hover:shadow-hover transition-shadow duration-300 group cursor-pointer"
               >
                 <div className="h-12 w-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-white transition-colors shrink-0">
                   <Icon className="h-6 w-6" />

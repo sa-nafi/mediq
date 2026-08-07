@@ -13,8 +13,6 @@ import (
 
 type MedicalTestRepository struct{}
 
-
-
 func NewMedicalTestRepository() *MedicalTestRepository {
 	return &MedicalTestRepository{}
 }
@@ -68,15 +66,14 @@ func (r *MedicalTestRepository) OrderTest(ctx context.Context, doctorUserID, pat
 	return testID, nil
 }
 
-// GetTests fetches a lightweight summary list of tests, supporting status filters.
-func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, role string, userID int, offset, limit int) ([]models.MedicalTestSummary, error) {
+// GetTests fetches a lightweight summary list of tests, supporting status filters, with pagination.
+func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, role string, userID int, offset, limit int) ([]models.MedicalTestSummary, int, error) {
 	tx := db.TxFromContext(ctx)
 	if tx == nil {
-		return nil, errors.New("transaction not found in context")
+		return nil, 0, errors.New("transaction not found in context")
 	}
 
-	query := `
-		SELECT t.test_id, t.patient_id, t.test_name, t.status, t.ordered_date, p.first_name, p.last_name
+	baseQuery := `
 		FROM Medical_Tests t
 		JOIN Patients p ON t.patient_id = p.patient_id
 		WHERE 1=1
@@ -84,28 +81,37 @@ func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, rol
 	args := []interface{}{}
 	argIndex := 1
 
-	if role == "patient" {
-		query += fmt.Sprintf(" AND p.user_id = $%d", argIndex)
+	switch role {
+	case "patient":
+		baseQuery += fmt.Sprintf(" AND p.user_id = $%d", argIndex)
 		args = append(args, userID)
 		argIndex++
-	} else if role == "doctor" {
-		query += fmt.Sprintf(" AND t.doctor_id = (SELECT doctor_id FROM Doctors JOIN Employees emp ON Doctors.employee_id = emp.employee_id WHERE emp.user_id = $%d)", argIndex)
+	case "doctor":
+		baseQuery += fmt.Sprintf(" AND t.doctor_id = (SELECT doctor_id FROM Doctors JOIN Employees emp ON Doctors.employee_id = emp.employee_id WHERE emp.user_id = $%d)", argIndex)
 		args = append(args, userID)
 		argIndex++
 	}
 
 	if status != "" {
-		query += fmt.Sprintf(" AND t.status = $%d", argIndex)
+		baseQuery += fmt.Sprintf(" AND t.status = $%d", argIndex)
 		args = append(args, status)
 		argIndex++
 	}
 
+	// Get total count
+	var totalCount int
+	countQuery := `SELECT COUNT(*) ` + baseQuery
+	if err := tx.QueryRow(ctx, countQuery, args...).Scan(&totalCount); err != nil {
+		return nil, 0, fmt.Errorf("failed to count tests: %w", err)
+	}
+
+	query := `SELECT t.test_id, t.patient_id, t.test_name, t.status, t.ordered_date, p.first_name, p.last_name ` + baseQuery
 	query += fmt.Sprintf(" ORDER BY t.ordered_date DESC, t.test_id DESC LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
 	args = append(args, limit, offset)
 
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query tests: %w", err)
+		return nil, 0, fmt.Errorf("failed to query tests: %w", err)
 	}
 	defer rows.Close()
 
@@ -121,7 +127,7 @@ func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, rol
 			&t.PatientFirstName,
 			&t.PatientLastName,
 		); err != nil {
-			return nil, fmt.Errorf("failed to scan test summary: %w", err)
+			return nil, 0, fmt.Errorf("failed to scan test summary: %w", err)
 		}
 		tests = append(tests, t)
 	}
@@ -130,7 +136,7 @@ func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, rol
 		tests = []models.MedicalTestSummary{}
 	}
 
-	return tests, nil
+	return tests, totalCount, nil
 }
 
 // GetTestByID retrieves a single medical test from the comprehensive view.
