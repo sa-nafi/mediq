@@ -69,7 +69,7 @@ func (r *MedicalTestRepository) OrderTest(ctx context.Context, doctorUserID, pat
 }
 
 // GetTests fetches a lightweight summary list of tests, supporting status filters.
-func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, offset, limit int) ([]models.MedicalTestSummary, error) {
+func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, role string, userID int, offset, limit int) ([]models.MedicalTestSummary, error) {
 	tx := db.TxFromContext(ctx)
 	if tx == nil {
 		return nil, errors.New("transaction not found in context")
@@ -83,6 +83,16 @@ func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, off
 	`
 	args := []interface{}{}
 	argIndex := 1
+
+	if role == "patient" {
+		query += fmt.Sprintf(" AND p.user_id = $%d", argIndex)
+		args = append(args, userID)
+		argIndex++
+	} else if role == "doctor" {
+		query += fmt.Sprintf(" AND t.doctor_id = (SELECT doctor_id FROM Doctors JOIN Employees emp ON Doctors.employee_id = emp.employee_id WHERE emp.user_id = $%d)", argIndex)
+		args = append(args, userID)
+		argIndex++
+	}
 
 	if status != "" {
 		query += fmt.Sprintf(" AND t.status = $%d", argIndex)

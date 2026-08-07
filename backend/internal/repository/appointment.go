@@ -45,24 +45,34 @@ func (r *AppointmentRepository) CancelAppointment(ctx context.Context, appointme
 	return err
 }
 
-// GetAppointments gets all appointments, optionally filtering by role and user ID.
-func (r *AppointmentRepository) GetAppointments(ctx context.Context, role string, userID int, limit, offset int) ([]models.Appointment, int, error) {
+// GetAppointments gets all appointments, optionally filtering by role, user ID, status, and sort order.
+func (r *AppointmentRepository) GetAppointments(ctx context.Context, role string, userID int, status, sort string, limit, offset int) ([]models.Appointment, int, error) {
 	tx := db.TxFromContext(ctx)
 	if tx == nil {
 		return nil, 0, errors.New("no database transaction found in context")
 	}
 
-	baseQuery := ` FROM Appointments a`
+	baseQuery := ` FROM Appointments a 
+		JOIN Doctors d ON a.doctor_id = d.doctor_id
+		JOIN Employees e ON d.employee_id = e.employee_id
+		JOIN Patients p ON a.patient_id = p.patient_id
+	`
 	args := []interface{}{}
 
 	if role == "patient" {
 		baseQuery += ` WHERE a.patient_id = (SELECT patient_id FROM Patients WHERE user_id = $1)`
 		args = append(args, userID)
 	} else if role == "doctor" {
-		baseQuery += ` WHERE a.doctor_id = (SELECT doctor_id FROM Doctors JOIN Employees e ON Doctors.employee_id = e.employee_id WHERE e.user_id = $1)`
+		baseQuery += ` WHERE a.doctor_id = (SELECT doctor_id FROM Doctors JOIN Employees emp ON Doctors.employee_id = emp.employee_id WHERE emp.user_id = $1)`
 		args = append(args, userID)
+	} else {
+		baseQuery += ` WHERE 1=1`
 	}
-	// receptionist and admin get all appointments.
+
+	if status != "" {
+		args = append(args, status)
+		baseQuery += ` AND a.status = $` + strconv.Itoa(len(args))
+	}
 
 	var totalCount int
 	countQuery := `SELECT COUNT(*) ` + baseQuery
@@ -71,10 +81,17 @@ func (r *AppointmentRepository) GetAppointments(ctx context.Context, role string
 	}
 
 	query := `
-		SELECT a.appointment_id, a.patient_id, a.doctor_id, a.appointment_date, a.serial_number, a.status, a.type, a.notes, a.created_at
+		SELECT a.appointment_id, a.patient_id, a.doctor_id, a.appointment_date, a.serial_number, a.status, a.type, a.notes, a.created_at,
+		       e.first_name AS doc_first, e.last_name AS doc_last, e.phone AS doc_phone, d.specialization,
+			   p.first_name AS pat_first, p.last_name AS pat_last
 	` + baseQuery
 	
-	query += ` ORDER BY a.appointment_date DESC LIMIT $` + strconv.Itoa(len(args)+1) + ` OFFSET $` + strconv.Itoa(len(args)+2)
+	orderClause := ` ORDER BY a.appointment_date DESC`
+	if sort == "asc" {
+		orderClause = ` ORDER BY a.appointment_date ASC`
+	}
+	
+	query += orderClause + ` LIMIT $` + strconv.Itoa(len(args)+1) + ` OFFSET $` + strconv.Itoa(len(args)+2)
 	args = append(args, limit, offset)
 
 	rows, err := tx.Query(ctx, query, args...)
@@ -86,20 +103,14 @@ func (r *AppointmentRepository) GetAppointments(ctx context.Context, role string
 	var appointments []models.Appointment
 	for rows.Next() {
 		var a models.Appointment
+		var doc models.Doctor
+		var pat models.Patient
 		var notes *string
-		
-		err := rows.Scan(
-			&a.AppointmentID,
-			&a.PatientID,
-			&a.DoctorID,
-			&a.AppointmentDate,
-			&a.SerialNumber,
-			&a.Status,
-			&a.Type,
-			&notes,
-			&a.CreatedAt,
-		)
-		if err != nil {
+		if err := rows.Scan(
+			&a.AppointmentID, &a.PatientID, &a.DoctorID, &a.AppointmentDate, &a.SerialNumber, &a.Status, &a.Type, &notes, &a.CreatedAt,
+			&doc.FirstName, &doc.LastName, &doc.Phone, &doc.Specialization,
+			&pat.FirstName, &pat.LastName,
+		); err != nil {
 			return nil, 0, err
 		}
 		
@@ -107,6 +118,8 @@ func (r *AppointmentRepository) GetAppointments(ctx context.Context, role string
 			a.Notes = *notes
 		}
 		
+		a.Doctor = &doc
+		a.Patient = &pat
 		appointments = append(appointments, a)
 	}
 	

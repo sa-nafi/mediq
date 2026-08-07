@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/sa-nafi/mediq/backend/internal/db"
 	"github.com/sa-nafi/mediq/backend/internal/models"
@@ -134,6 +135,52 @@ func (r *PatientRepository) GetAllPatients(ctx context.Context, searchQuery stri
 	}
 	
 	return patients, totalCount, nil
+}
+
+// GetPatientByUserID retrieves a single patient by their associated user ID.
+func (r *PatientRepository) GetPatientByUserID(ctx context.Context, userID int) (*models.Patient, error) {
+	tx := db.TxFromContext(ctx)
+	if tx == nil {
+		return nil, errors.New("transaction not found in context")
+	}
+
+	query := `
+		SELECT 
+			p.patient_id, p.user_id,
+			p.first_name, p.last_name, p.date_of_birth, p.gender, p.blood_type,
+			p.phone, p.address,
+			u.email
+		FROM Patients p
+		JOIN Users u ON p.user_id = u.user_id
+		WHERE p.user_id = $1
+	`
+	var p models.Patient
+	var email string
+	err := tx.QueryRow(ctx, query, userID).Scan(
+		&p.ID,
+		&p.UserID,
+		&p.FirstName,
+		&p.LastName,
+		&p.DateOfBirth,
+		&p.Gender,
+		&p.BloodType,
+		&p.Phone,
+		&p.Address,
+		&email,
+	)
+	if err == nil {
+		p.User = &models.User{
+			Email: email,
+		}
+	}
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, utils.ErrNotFound
+		}
+		return nil, err
+	}
+
+	return &p, nil
 }
 
 // GetPatientByID retrieves a single patient by their ID.

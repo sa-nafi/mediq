@@ -96,8 +96,10 @@ func (h *AppointmentHandler) GetAppointmentsHandler(w http.ResponseWriter, r *ht
 	}
 
 	page, limit, offset := utils.ParsePaginationParams(r)
+	status := r.URL.Query().Get("status")
+	sort := r.URL.Query().Get("sort")
 
-	appointments, totalCount, err := h.repo.GetAppointments(r.Context(), role, userID, limit, offset)
+	appointments, totalCount, err := h.repo.GetAppointments(r.Context(), role, userID, status, sort, limit, offset)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve appointments")
 		return

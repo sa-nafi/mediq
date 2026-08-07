@@ -9,7 +9,7 @@ import (
 // Doctor represents a doctor in the system.
 // It contains joined data from Users, Employees, Doctors, and Departments tables.
 type Doctor struct {
-	DoctorID        int       `json:"-"`
+	DoctorID        int       `json:"doctor_id"`
 	EmployeeID      int       `json:"-"`
 	UserID          int       `json:"-"`
 	PublicID        uuid.UUID `json:"id"`

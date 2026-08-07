@@ -20,6 +20,68 @@ func NewPatientHandler(repo *repository.PatientRepository) *PatientHandler {
 	return &PatientHandler{repo: repo}
 }
 
+// GetMyPatientProfileHandler handles GET /api/patients/me
+func (h *PatientHandler) GetMyPatientProfileHandler(w http.ResponseWriter, r *http.Request) {
+	userIDObj := r.Context().Value(middleware.UserIDKey)
+	userID, ok := userIDObj.(int)
+	if !ok {
+		utils.WriteError(w, http.StatusInternalServerError, "invalid user ID type in context")
+		return
+	}
+
+	patient, err := h.repo.GetPatientByUserID(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			utils.WriteError(w, http.StatusNotFound, "Patient profile not found")
+			return
+		}
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve patient profile")
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, patient)
+}
+
+// UpdateMyPatientProfileHandler handles PUT /api/patients/me
+func (h *PatientHandler) UpdateMyPatientProfileHandler(w http.ResponseWriter, r *http.Request) {
+	userIDObj := r.Context().Value(middleware.UserIDKey)
+	userID, ok := userIDObj.(int)
+	if !ok {
+		utils.WriteError(w, http.StatusInternalServerError, "invalid user ID type in context")
+		return
+	}
+
+	patient, err := h.repo.GetPatientByUserID(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			utils.WriteError(w, http.StatusNotFound, "Patient profile not found")
+			return
+		}
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve patient profile")
+		return
+	}
+
+	var req updatePatientRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	params := repository.UpdatePatientParams{
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Phone:     req.Phone,
+		Address:   req.Address,
+	}
+
+	if err := h.repo.UpdatePatient(r.Context(), patient.ID, params); err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to update patient profile")
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Patient profile updated successfully"})
+}
+
 // GetPatientsHandler handles GET /api/patients
 func (h *PatientHandler) GetPatientsHandler(w http.ResponseWriter, r *http.Request) {
 	searchQuery := r.URL.Query().Get("search")

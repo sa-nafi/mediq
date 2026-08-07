@@ -79,7 +79,10 @@ func (h *MedicalTestHandler) GetTestsHandler(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	tests, err := h.repo.GetTests(r.Context(), status, offset, limit)
+	role, _ := r.Context().Value(middleware.RoleKey).(string)
+	userID, _ := r.Context().Value(middleware.UserIDKey).(int)
+
+	tests, err := h.repo.GetTests(r.Context(), status, role, userID, offset, limit)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve tests")
 		return
