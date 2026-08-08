@@ -8,6 +8,7 @@ type AppointmentStatus string
 
 const (
 	StatusScheduled AppointmentStatus = "scheduled"
+	StatusInQueue   AppointmentStatus = "in_queue"
 	StatusCompleted AppointmentStatus = "completed"
 	StatusCancelled AppointmentStatus = "cancelled"
 	StatusNoShow    AppointmentStatus = "no_show"

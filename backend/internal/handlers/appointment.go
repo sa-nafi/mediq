@@ -26,6 +26,7 @@ type createAppointmentRequest struct {
 	DoctorID        int    `json:"doctor_id"`
 	AppointmentDate string `json:"appointment_date"` // YYYY-MM-DD format
 	Type            string `json:"type"`
+	Notes           string `json:"notes"`
 }
 
 // CreateAppointmentHandler handles POST /api/appointments
@@ -70,7 +71,7 @@ func (h *AppointmentHandler) CreateAppointmentHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	appointmentID, err := h.repo.BookAppointment(r.Context(), patientID, req.DoctorID, date, req.Type)
+	appointmentID, err := h.repo.BookAppointment(r.Context(), patientID, req.DoctorID, date, req.Type, string(models.StatusScheduled), req.Notes)
 	if err != nil {
 		// Postgres raised exceptions (e.g., limit reached, on leave, etc.)
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
@@ -88,6 +89,8 @@ type createReceptionistAppointmentRequest struct {
 	DoctorID        int    `json:"doctor_id"`
 	AppointmentDate string `json:"appointment_date"` // YYYY-MM-DD format
 	Type            string `json:"type"`
+	Status          string `json:"status"`
+	Notes           string `json:"notes"`
 }
 
 // CreateReceptionistAppointmentHandler handles POST /api/appointments/book-for-patient
@@ -114,7 +117,17 @@ func (h *AppointmentHandler) CreateReceptionistAppointmentHandler(w http.Respons
 		return
 	}
 
-	appointmentID, err := h.repo.BookAppointment(r.Context(), req.PatientID, req.DoctorID, date, req.Type)
+	status := req.Status
+	if status == "" {
+		status = string(models.StatusScheduled)
+	}
+	
+	if status != string(models.StatusScheduled) && status != string(models.StatusInQueue) && status != string(models.StatusCompleted) {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid appointment status during booking.")
+		return
+	}
+
+	appointmentID, err := h.repo.BookAppointment(r.Context(), req.PatientID, req.DoctorID, date, req.Type, status, req.Notes)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err.Error())
 		return
@@ -259,8 +272,8 @@ func (h *AppointmentHandler) UpdateAppointmentStatusHandler(w http.ResponseWrite
 		return
 	}
 
-	if req.Status != string(models.StatusCompleted) && req.Status != string(models.StatusNoShow) && req.Status != string(models.StatusCancelled) {
-		utils.WriteError(w, http.StatusBadRequest, "Invalid status. Must be completed, cancelled, or no_show")
+	if req.Status != string(models.StatusCompleted) && req.Status != string(models.StatusNoShow) && req.Status != string(models.StatusCancelled) && req.Status != string(models.StatusInQueue) {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid status. Must be in_queue, completed, cancelled, or no_show")
 		return
 	}
 

@@ -12,13 +12,15 @@ CREATE OR REPLACE FUNCTION book_appointment(
     p_patient_id     INT,
     p_doctor_id      INT,
     p_appointment_date DATE,
-    p_type           VARCHAR(20)
+    p_type           VARCHAR(20),
+    p_status         VARCHAR(20) DEFAULT 'scheduled',
+    p_notes          TEXT DEFAULT NULL
 ) RETURNS INT AS $$
 DECLARE
     v_appointment_id INT;
 BEGIN
-    INSERT INTO Appointments (patient_id, doctor_id, appointment_date, type, status)
-    VALUES (p_patient_id, p_doctor_id, p_appointment_date, p_type, 'scheduled')
+    INSERT INTO Appointments (patient_id, doctor_id, appointment_date, type, status, notes)
+    VALUES (p_patient_id, p_doctor_id, p_appointment_date, p_type, p_status, p_notes)
     RETURNING appointment_id INTO v_appointment_id;
 
     RETURN v_appointment_id;

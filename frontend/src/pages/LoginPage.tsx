@@ -49,7 +49,9 @@ export function LoginPage() {
 
         toast.success('Logged in successfully');
 
-        const from = location.state?.from?.pathname;
+        let from = location.state?.from?.pathname;
+        if (from === '/staff') from = null;
+
         if (from) {
           navigate(from, { replace: true });
         } else {
@@ -57,6 +59,8 @@ export function LoginPage() {
             navigate('/patient', { replace: true });
           } else if (user?.role === 'receptionist') {
             navigate('/receptionist', { replace: true });
+          } else if (user?.role === 'doctor') {
+            navigate('/doctor', { replace: true });
           } else {
             navigate('/staff', { replace: true });
           }
@@ -70,7 +74,12 @@ export function LoginPage() {
   };
 
   if (isInitialized && user) {
-    const from = (location.state as any)?.from?.pathname || (user.role === 'patient' ? '/patient' : user.role === 'receptionist' ? '/receptionist' : '/staff');
+    let from = (location.state as any)?.from?.pathname;
+    if (from === '/staff') from = null;
+    
+    if (!from) {
+      from = user.role === 'patient' ? '/patient' : user.role === 'receptionist' ? '/receptionist' : user.role === 'doctor' ? '/doctor' : '/staff';
+    }
     return <Navigate to={from} replace />;
   }
 

@@ -38,6 +38,16 @@ import { ReceptionistProfilePage } from '@/pages/receptionist/ProfilePage';
 import { ReceptionistDoctorsPage } from '@/pages/receptionist/DoctorsPage';
 import { ReceptionistBookAppointmentPage } from '@/pages/receptionist/BookAppointmentPage';
 
+import { DoctorLayout } from '@/layouts/DoctorLayout';
+import { DoctorDashboard } from '@/pages/doctor/Dashboard';
+import { DoctorQueuePage } from '@/pages/doctor/Queue';
+import { ConsultationPage } from '@/pages/doctor/ConsultationPage';
+import { DoctorPrescriptionsPage } from '@/pages/doctor/PrescriptionsPage';
+import { DoctorMedicalRecordsPage } from '@/pages/doctor/MedicalRecordsPage';
+import { DoctorMedicalTestsPage } from '@/pages/doctor/MedicalTestsPage';
+import { DoctorProfilePage } from '@/pages/doctor/ProfilePage';
+
+
 export default function App() {
   const { init, isInitialized } = useAuthStore();
 
@@ -104,6 +114,19 @@ export default function App() {
               <Route path="/receptionist/profile" element={<ReceptionistProfilePage />} />
               <Route path="/receptionist/doctors" element={<ReceptionistDoctorsPage />} />
               <Route path="/receptionist/book/:id" element={<ReceptionistBookAppointmentPage />} />
+            </Route>
+          </Route>
+
+          {/* Doctor Routes - Protected */}
+          <Route element={<ProtectedRoute allowedRoles={['doctor']} />}>
+            <Route element={<DoctorLayout />}>
+              <Route path="/doctor" element={<DoctorDashboard />} />
+              <Route path="/doctor/queue" element={<DoctorQueuePage />} />
+              <Route path="/doctor/queue/:appointmentId" element={<ConsultationPage />} />
+              <Route path="/doctor/prescriptions" element={<DoctorPrescriptionsPage />} />
+              <Route path="/doctor/medical-records" element={<DoctorMedicalRecordsPage />} />
+              <Route path="/doctor/medical-tests" element={<DoctorMedicalTestsPage />} />
+              <Route path="/doctor/profile" element={<DoctorProfilePage />} />
             </Route>
           </Route>
 

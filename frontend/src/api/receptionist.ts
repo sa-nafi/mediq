@@ -40,7 +40,7 @@ export const receptionistApi = {
     const res = await apiClient.post('/patients/walk-in', data);
     return res.data;
   },
-  bookAppointmentForPatient: async (data: { patient_id: number; doctor_id: number; appointment_date: string; type: string }) => {
+  bookAppointmentForPatient: async (data: { patient_id: number; doctor_id: number; appointment_date: string; type: string; status?: string; notes?: string }) => {
     const res = await apiClient.post('/appointments/book-for-patient', data);
     return res.data;
   },

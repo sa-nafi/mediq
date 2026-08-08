@@ -17,7 +17,7 @@ export function PatientDashboard() {
   });
   const { data: upcomingData, isLoading: isLoadingUpcoming } = useQuery({
     queryKey: ['patient', 'appointments', 'upcoming_count'],
-    queryFn: () => patientApi.getAppointments({ status: 'scheduled', limit: 1 }),
+    queryFn: () => patientApi.getAppointments({ status: 'scheduled,in_queue', limit: 1 }),
   });
 
   const { data: completedData, isLoading: isLoadingCompleted } = useQuery({
@@ -27,7 +27,7 @@ export function PatientDashboard() {
 
   const { data: nextAppointmentData, isLoading: isLoadingNext, error } = useQuery({
     queryKey: ['patient', 'appointments', 'next'],
-    queryFn: () => patientApi.getAppointments({ status: 'scheduled', sort: 'asc', limit: 1 }),
+    queryFn: () => patientApi.getAppointments({ status: 'scheduled,in_queue', sort: 'asc', limit: 1 }),
   });
 
   const upcomingCount = upcomingData?.total_count || 0;

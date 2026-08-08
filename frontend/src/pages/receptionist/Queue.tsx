@@ -14,9 +14,9 @@ export function ReceptionistQueuePage() {
   const [doctorName, setDoctorName] = useState('');
 
   const { data: appointmentsData, isLoading, error } = useQuery({
-    queryKey: ['receptionist', 'appointments', 'scheduled'],
+    queryKey: ['receptionist', 'appointments', 'scheduled_in_queue'],
     queryFn: () => receptionistApi.getAppointments({
-      status: 'scheduled',
+      status: 'scheduled,in_queue',
       limit: 100 // fetch all for queue view
     }),
   });
@@ -88,7 +88,7 @@ export function ReceptionistQueuePage() {
             queue.map((apt: any, index: number) => (
               <div
                 key={apt.appointment_id}
-                className={`bg-surface rounded-xl p-4 shadow-sm border flex flex-col md:flex-row gap-4 md:items-center justify-between hover:border-secondary/30 transition-colors group ${index === 0 ? 'border-secondary/50 shadow-md ring-1 ring-secondary/20' : 'border-border-light'}`}
+                className={`bg-background rounded-xl p-4 shadow-sm border flex flex-col md:flex-row gap-4 md:items-center justify-between hover:border-secondary/30 transition-colors group ${index === 0 ? 'border-secondary/50 shadow-md ring-1 ring-secondary/20' : 'border-border-light'}`}
               >
                 <div className="flex gap-4">
                   <div className={`hidden sm:flex h-12 w-12 items-center justify-center rounded-xl border font-bold text-lg ${index === 0 ? 'bg-secondary text-white border-secondary shadow-sm' : 'bg-secondary/10 border-secondary/20 text-secondary'}`}>
@@ -99,6 +99,13 @@ export function ReceptionistQueuePage() {
                       <span className="text-base font-bold text-foreground">
                         {apt.patient?.first_name} {apt.patient?.last_name}
                       </span>
+                      <span className={`flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border ${
+                        apt.status === 'in_queue' 
+                          ? 'text-indigo-700 bg-indigo-50 border-indigo-200' 
+                          : 'text-blue-700 bg-blue-50 border-blue-200'
+                      }`}>
+                        {apt.status === 'in_queue' ? 'In Queue' : 'Scheduled'}
+                      </span>
                       {index === 0 && (
                         <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-white bg-emerald-500 px-2 py-0.5 rounded shadow-sm">
                           Next in line
@@ -107,16 +114,21 @@ export function ReceptionistQueuePage() {
                     </div>
 
                     <div className="text-[13px] text-muted flex flex-wrap items-center gap-3 mt-1.5 font-medium">
-                      <div className="flex items-center gap-1.5 bg-background border border-border-light px-2 py-0.5 rounded">
+                      <div className="flex items-center gap-1.5 bg-secondary/5 border border-secondary/20 px-2 py-0.5 rounded text-secondary font-bold uppercase tracking-wider text-[10px]">
                         <Clock3 className="h-3.5 w-3.5" />
                         {dayjs(apt.appointment_date).format('h:mm A')}
                       </div>
-                      <div className="flex items-center gap-1.5 bg-background border border-border-light px-2 py-0.5 rounded">
+                      <div className="flex items-center gap-1.5 bg-secondary/5 border border-secondary/20 px-2 py-0.5 rounded text-secondary font-bold uppercase tracking-wider text-[10px]">
                         Dr. {apt.doctor?.first_name} {apt.doctor?.last_name}
                       </div>
                       <div className="flex items-center gap-1.5 bg-secondary/5 border border-secondary/20 px-2 py-0.5 rounded text-secondary font-bold uppercase tracking-wider text-[10px]">
                         {apt.type}
                       </div>
+                      {apt.notes && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground italic">
+                          "{apt.notes}"
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

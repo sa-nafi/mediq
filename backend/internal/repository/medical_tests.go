@@ -67,7 +67,7 @@ func (r *MedicalTestRepository) OrderTest(ctx context.Context, doctorUserID, pat
 }
 
 // GetTests fetches a lightweight summary list of tests, supporting status filters, with pagination.
-func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, role string, userID int, offset, limit int) ([]models.MedicalTestSummary, int, error) {
+func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, filterPatientID *int, role string, userID int, consultationApptID *int, offset, limit int) ([]models.MedicalTestSummary, int, error) {
 	tx := db.TxFromContext(ctx)
 	if tx == nil {
 		return nil, 0, errors.New("transaction not found in context")
@@ -87,8 +87,32 @@ func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, rol
 		args = append(args, userID)
 		argIndex++
 	case "doctor":
-		baseQuery += fmt.Sprintf(" AND t.doctor_id = (SELECT doctor_id FROM Doctors JOIN Employees emp ON Doctors.employee_id = emp.employee_id WHERE emp.user_id = $%d)", argIndex)
-		args = append(args, userID)
+		hasConsultationAccess := false
+		if consultationApptID != nil && filterPatientID != nil {
+			var exists bool
+			verifyQuery := `
+				SELECT EXISTS(
+					SELECT 1 FROM Appointments a
+					JOIN Doctors d ON a.doctor_id = d.doctor_id
+					JOIN Employees e ON d.employee_id = e.employee_id
+					WHERE a.appointment_id = $1 AND a.patient_id = $2 AND e.user_id = $3
+				)
+			`
+			if err := tx.QueryRow(ctx, verifyQuery, *consultationApptID, *filterPatientID, userID).Scan(&exists); err == nil && exists {
+				hasConsultationAccess = true
+			}
+		}
+
+		if !hasConsultationAccess {
+			baseQuery += fmt.Sprintf(" AND t.doctor_id = (SELECT doctor_id FROM Doctors JOIN Employees emp ON Doctors.employee_id = emp.employee_id WHERE emp.user_id = $%d)", argIndex)
+			args = append(args, userID)
+			argIndex++
+		}
+	}
+
+	if filterPatientID != nil {
+		baseQuery += fmt.Sprintf(" AND t.patient_id = $%d", argIndex)
+		args = append(args, *filterPatientID)
 		argIndex++
 	}
 

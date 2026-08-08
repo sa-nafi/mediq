@@ -13,5 +13,7 @@ type MedicalRecord struct {
 	Notes         *string   `json:"notes"`
 
 	// Joined relations
-	Doctor *Doctor `json:"doctor,omitempty"`
+	PatientFirstName string  `json:"patient_first_name,omitempty"`
+	PatientLastName  string  `json:"patient_last_name,omitempty"`
+	Doctor           *Doctor `json:"doctor,omitempty"`
 }

@@ -17,9 +17,9 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   if (allowedRoles && user) {
     if (!allowedRoles.includes(user.role)) {
       // User is authenticated but doesn't have the right role
-      if (user.role === 'patient') {
-        return <Navigate to="/patient" replace />;
-      }
+      if (user.role === 'patient') return <Navigate to="/patient" replace />;
+      if (user.role === 'doctor') return <Navigate to="/doctor" replace />;
+      if (user.role === 'receptionist') return <Navigate to="/receptionist" replace />;
       return <Navigate to="/staff" replace />;
     }
   }

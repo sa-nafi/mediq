@@ -90,8 +90,15 @@ func (h *MedicalRecordHandler) GetMedicalRecordsHandler(w http.ResponseWriter, r
 	}
 
 	page, limit, offset := utils.ParsePaginationParams(r)
+	
+	var consultationApptID *int
+	if apptStr := r.URL.Query().Get("consultation_appointment_id"); apptStr != "" {
+		if apptID, err := strconv.Atoi(apptStr); err == nil {
+			consultationApptID = &apptID
+		}
+	}
 
-	records, totalCount, err := h.repo.GetMedicalRecords(r.Context(), role, userID, filterPatientID, limit, offset)
+	records, totalCount, err := h.repo.GetMedicalRecords(r.Context(), role, userID, filterPatientID, consultationApptID, limit, offset)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve medical records")
 		return

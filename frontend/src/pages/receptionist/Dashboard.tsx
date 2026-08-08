@@ -22,8 +22,8 @@ export function ReceptionistDashboard() {
   });
 
   const { data: scheduledData, isLoading: isLoadingScheduled } = useQuery({
-    queryKey: ['receptionist', 'appointments', 'scheduled'],
-    queryFn: () => receptionistApi.getAppointments({ status: 'scheduled', limit: 100 }),
+    queryKey: ['receptionist', 'appointments', 'scheduled_in_queue'],
+    queryFn: () => receptionistApi.getAppointments({ status: 'scheduled,in_queue', limit: 100 }),
   });
 
   const { data: completedData, isLoading: isLoadingCompleted } = useQuery({
@@ -78,7 +78,7 @@ export function ReceptionistDashboard() {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-xl bg-surface p-4 shadow-sm border border-border-light flex items-center gap-4 hover:border-secondary/30 transition-colors">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
                 <Calendar className="h-5 w-5 text-blue-500" />
@@ -129,18 +129,27 @@ export function ReceptionistDashboard() {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-base font-bold text-foreground">{apt.patient?.first_name} {apt.patient?.last_name}</span>
-                          <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                            Scheduled
+                          <span className={`flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border ${
+                            apt.status === 'in_queue' 
+                              ? 'text-indigo-700 bg-indigo-50 border-indigo-200' 
+                              : 'text-blue-700 bg-blue-50 border-blue-200'
+                          }`}>
+                            {apt.status === 'in_queue' ? 'In Queue' : 'Scheduled'}
                           </span>
                         </div>
 
                         <div className="text-[13px] text-muted flex flex-wrap items-center gap-3 mt-1.5 font-medium">
-                          <div className="flex items-center gap-1.5 bg-background border border-border-light px-2 py-0.5 rounded">
+                          <div className="flex items-center gap-1.5 bg-secondary/5 border border-secondary/20 px-2 py-0.5 rounded text-secondary font-bold uppercase tracking-wider text-[10px]">
                             Dr. {apt.doctor?.first_name} {apt.doctor?.last_name}
                           </div>
                           <div className="flex items-center gap-1.5 bg-secondary/5 border border-secondary/20 px-2 py-0.5 rounded text-secondary font-bold uppercase tracking-wider text-[10px]">
                             {apt.type}
                           </div>
+                          {apt.notes && (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground italic">
+                              "{apt.notes}"
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

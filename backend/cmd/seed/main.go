@@ -203,11 +203,12 @@ func main() {
 			for _, day := range []int{1, 3, 5} {
 				_, err = tx.Exec(ctx, "INSERT INTO Doctor_Schedules (doctor_id, day_of_week, start_time, end_time, max_patients) VALUES ($1, $2, '09:00:00', '13:00:00', 10) ON CONFLICT (doctor_id, day_of_week) DO NOTHING", docID, day)
 			}
-			// Add a leave for tomorrow to test unavailability
-			tomorrow := time.Now().Add(24 * time.Hour).Format("2006-01-02")
-			_, err = tx.Exec(ctx, "INSERT INTO Doctor_Leaves (doctor_id, leave_date) VALUES ($1, $2) ON CONFLICT DO NOTHING", docID, tomorrow)
+			// Add a leave for next month to test unavailability
+			leaveDate := time.Now().AddDate(0, 1, 0).Format("2006-01-02")
+			_, err = tx.Exec(ctx, "INSERT INTO Doctor_Leaves (doctor_id, leave_date) VALUES ($1, $2) ON CONFLICT DO NOTHING", docID, leaveDate)
 		case "doctor.neuro@mediq.com":
-			for _, day := range []int{2, 4, 6} {
+			days := []int{2, 4, 6, int(time.Now().Weekday())}
+			for _, day := range days {
 				_, err = tx.Exec(ctx, "INSERT INTO Doctor_Schedules (doctor_id, day_of_week, start_time, end_time, max_patients) VALUES ($1, $2, '10:00:00', '16:00:00', 15) ON CONFLICT (doctor_id, day_of_week) DO NOTHING", docID, day)
 			}
 		case "doctor.ortho@mediq.com":
@@ -300,8 +301,8 @@ func main() {
 		{p1, d4, getDate(0, false), 1, "completed", "new", "Patient feeling unwell", "Common Cold", "Rest and hydration", "Blood Test (CBC)", "completed", func(s string) *string { return &s }("Normal"), func(s string) *string { return &s }(getDate(0, false)), []string{"Napa 500mg", "Ceevit 250mg"}},
 		// d1 (Cardio) works Mon,Wed,Fri. target: 1 (Mon). Future.
 		{p1, d1, getDate(1, true), 1, "scheduled", "follow-up", "Checkup for hypertension", "", "", "Lipid Profile", "ordered", nil, nil, nil},
-		// d2 (Neuro) works Tue,Thu,Sat. target: 2 (Tue). Past.
-		{p1, d2, getDate(2, false), 1, "cancelled", "new", "Headaches", "", "", "", "", nil, nil, nil},
+		// d2 (Neuro) works Tue,Thu,Sat. target: today.
+		{p1, d2, time.Now().Format("2006-01-02"), 1, "in_queue", "new", "Headaches", "", "", "", "", nil, nil, nil},
 
 		// Patient 2 (3 appointments)
 		// d3 (Ortho) works Mon-Fri. target: 3 (Wed). Past.
@@ -317,7 +318,7 @@ func main() {
 		// d2 (Neuro) works Tue,Thu,Sat. target: 4 (Thu). Past.
 		{p3, d2, getDate(4, false), 1, "completed", "new", "Nerve pain", "Neuropathy", "Medication", "Nerve Conduction Study", "completed", func(s string) *string { return &s }("Mild slowing"), func(s string) *string { return &s }(getDate(4, false)), []string{"Bextram Gold"}},
 		// d1 (Cardio) works Mon,Wed,Fri. target: 3 (Wed). Future.
-		{p3, d1, getDate(3, true), 1, "scheduled", "new", "Palpitations", "", "", "", "", nil, nil, nil},
+		{p3, d1, getDate(3, true), 1, "in_queue", "new", "Palpitations", "", "", "", "", nil, nil, nil},
 	}
 
 	for _, a := range appts {

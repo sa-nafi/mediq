@@ -19,6 +19,8 @@ export function ReceptionistBookAppointmentPage() {
 
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [appointmentType, setAppointmentType] = useState('new');
+  const [appointmentStatus, setAppointmentStatus] = useState(dayjs().format('YYYY-MM-DD') === dayjs().format('YYYY-MM-DD') ? 'in_queue' : 'scheduled');
+  const [notes, setNotes] = useState('');
   
   // Receptionist specific state
   const [patientSearchQuery, setPatientSearchQuery] = useState('');
@@ -101,9 +103,11 @@ export function ReceptionistBookAppointmentPage() {
     }
     bookMutation.mutate({
       patient_id: selectedPatient.id,
-      doctor_id: doctorId,
+      doctor_id: Number(doctorId),
       appointment_date: selectedDate,
       type: appointmentType,
+      status: appointmentStatus,
+      notes: notes,
     });
   };
 
@@ -325,7 +329,11 @@ export function ReceptionistBookAppointmentPage() {
                       min={dayjs().format('YYYY-MM-DD')}
                       max={dayjs().add(2, 'month').format('YYYY-MM-DD')}
                       value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
+                      onChange={(e) => {
+                        const newDate = e.target.value;
+                        setSelectedDate(newDate);
+                        setAppointmentStatus(newDate === dayjs().format('YYYY-MM-DD') ? 'in_queue' : 'scheduled');
+                      }}
                       className="w-full bg-transparent border-none outline-none ml-2 text-sm text-foreground"
                     />
                   </div>
@@ -352,6 +360,37 @@ export function ReceptionistBookAppointmentPage() {
                   )}
                 </div>
               )}
+
+              {/* Status Selection */}
+              <div>
+                <label className="block text-sm font-semibold mb-2">Appointment Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {['scheduled', 'in_queue'].map(status => (
+                    <button
+                      key={status}
+                      onClick={() => setAppointmentStatus(status)}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                        appointmentStatus === status 
+                          ? 'bg-secondary text-white shadow-md' 
+                          : 'bg-background border border-border-light text-muted hover:border-secondary/50'
+                      }`}
+                    >
+                      {status === 'in_queue' ? 'In Queue' : 'Scheduled'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Additional Notes */}
+              <div>
+                <label className="block text-sm font-semibold mb-2">Additional Notes</label>
+                <textarea
+                  className="w-full bg-background rounded-xl border border-input px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary min-h-[100px]"
+                  placeholder="Any specific symptoms or notes? (Optional)"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                ></textarea>
+              </div>
             </div>
 
             <div className="mt-8 pt-6 border-t border-border-light flex justify-end">
