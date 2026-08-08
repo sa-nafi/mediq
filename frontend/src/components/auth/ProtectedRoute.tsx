@@ -20,7 +20,9 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
       if (user.role === 'patient') return <Navigate to="/patient" replace />;
       if (user.role === 'doctor') return <Navigate to="/doctor" replace />;
       if (user.role === 'receptionist') return <Navigate to="/receptionist" replace />;
-      return <Navigate to="/staff" replace />;
+      if (user.role === 'lab_tech') return <Navigate to="/lab-tech" replace />;
+      if (user.role === 'admin') return <Navigate to="/admin" replace />;
+      return <Navigate to="/" replace />;
     }
   }
 

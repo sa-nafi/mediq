@@ -144,10 +144,13 @@ func (h *PatientHandler) GetPatientByIDHandler(w http.ResponseWriter, r *http.Re
 }
 
 type updatePatientRequest struct {
-	FirstName *string `json:"first_name"`
-	LastName  *string `json:"last_name"`
-	Phone     *string `json:"phone"`
-	Address   *string `json:"address"`
+	FirstName   *string `json:"first_name"`
+	LastName    *string `json:"last_name"`
+	Phone       *string `json:"phone"`
+	Address     *string `json:"address"`
+	DateOfBirth *string `json:"date_of_birth"`
+	Gender      *string `json:"gender"`
+	BloodType   *string `json:"blood_type"`
 }
 
 // UpdatePatientHandler handles PUT /api/patients/{id}
@@ -189,10 +192,13 @@ func (h *PatientHandler) UpdatePatientHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	params := repository.UpdatePatientParams{
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-		Phone:     req.Phone,
-		Address:   req.Address,
+		FirstName:   req.FirstName,
+		LastName:    req.LastName,
+		Phone:       req.Phone,
+		Address:     req.Address,
+		DateOfBirth: req.DateOfBirth,
+		Gender:      req.Gender,
+		BloodType:   req.BloodType,
 	}
 
 	if err := h.repo.UpdatePatient(r.Context(), patientID, params); err != nil {

@@ -27,7 +27,6 @@ import { PatientProfilePage } from '@/pages/patient/ProfilePage';
 import { PatientMedicalRecordsPage } from '@/pages/patient/MedicalRecordsPage';
 import { PatientPrescriptionsPage } from '@/pages/patient/PrescriptionsPage';
 import { PatientTestsPage } from '@/pages/patient/MedicalTestsPage';
-import { StaffPortal } from '@/pages/StaffPortal';
 
 import { ReceptionistLayout } from '@/layouts/ReceptionistLayout';
 import { ReceptionistDashboard } from '@/pages/receptionist/Dashboard';
@@ -50,6 +49,14 @@ import { DoctorProfilePage } from '@/pages/doctor/ProfilePage';
 import { LabTechLayout } from '@/layouts/LabTechLayout';
 import { LabTechDashboard } from '@/pages/lab-tech/Dashboard';
 import { LabTechProfilePage } from '@/pages/lab-tech/ProfilePage';
+
+import { AdminLayout } from '@/layouts/AdminLayout';
+import { AuditLogsPage } from '@/pages/admin/AuditLogsPage';
+import { PatientsPage as AdminPatientsPage } from '@/pages/admin/PatientsPage';
+import { DoctorsPage as AdminDoctorsPage } from '@/pages/admin/DoctorsPage';
+import { ReceptionistsPage as AdminReceptionistsPage } from '@/pages/admin/ReceptionistsPage';
+import { LabTechsPage as AdminLabTechsPage } from '@/pages/admin/LabTechsPage';
+import { ProfilePage as AdminProfilePage } from '@/pages/admin/ProfilePage';
 
 
 export default function App() {
@@ -103,10 +110,6 @@ export default function App() {
             </Route>
           </Route>
 
-          {/* Staff Routes - Protected */}
-          <Route element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'receptionist', 'lab_tech']} />}>
-            <Route path="/staff" element={<StaffPortal />} />
-          </Route>
 
           {/* Receptionist Routes - Protected */}
           <Route element={<ProtectedRoute allowedRoles={['receptionist', 'admin']} />}>
@@ -139,6 +142,18 @@ export default function App() {
             <Route element={<LabTechLayout />}>
               <Route path="/lab-tech" element={<LabTechDashboard />} />
               <Route path="/lab-tech/profile" element={<LabTechProfilePage />} />
+            </Route>
+          </Route>
+
+          {/* Admin Routes - Protected */}
+          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+            <Route element={<AdminLayout />}>
+              <Route path="/admin" element={<AuditLogsPage />} />
+              <Route path="/admin/patients" element={<AdminPatientsPage />} />
+              <Route path="/admin/doctors" element={<AdminDoctorsPage />} />
+              <Route path="/admin/receptionists" element={<AdminReceptionistsPage />} />
+              <Route path="/admin/lab-techs" element={<AdminLabTechsPage />} />
+              <Route path="/admin/profile" element={<AdminProfilePage />} />
             </Route>
           </Route>
 
