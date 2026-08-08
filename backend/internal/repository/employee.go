@@ -174,8 +174,8 @@ func (r *EmployeeRepository) GetEmployeeByUserID(ctx context.Context, userID int
 
 type UpdateEmployeeParams struct {
 	DepartmentID *int
-	FirstName    string
-	LastName     string
+	FirstName    *string
+	LastName     *string
 	Phone        *string
 }
 
@@ -186,8 +186,12 @@ func (r *EmployeeRepository) UpdateEmployee(ctx context.Context, employeeID int,
 	}
 
 	res, err := tx.Exec(ctx, `
-		UPDATE Employees 
-		SET department_id = $1, first_name = $2, last_name = $3, phone = $4
+		UPDATE Employees
+		SET
+			department_id = COALESCE($1, department_id),
+			first_name = COALESCE($2, first_name),
+			last_name = COALESCE($3, last_name),
+			phone = COALESCE($4, phone)
 		WHERE employee_id = $5
 	`, p.DepartmentID, p.FirstName, p.LastName, p.Phone, employeeID)
 	if err != nil {

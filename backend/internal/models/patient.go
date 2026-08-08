@@ -5,7 +5,7 @@ import "time"
 // Patient represents a patient profile in the system.
 // It maps to the "patients" database table.
 type Patient struct {
-	ID          int       `json:"id"`
+	ID          int       `json:"patient_id"`
 	UserID      *int      `json:"-"` // Internal FK to users table
 	FirstName   string    `json:"first_name"`
 	LastName    string    `json:"last_name"`
