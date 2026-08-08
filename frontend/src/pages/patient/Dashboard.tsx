@@ -4,9 +4,17 @@ import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 
 import { patientApi } from '@/api/patient';
+import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 
-export function PatientPortal() {
+export function PatientDashboard() {
+  const user = useAuthStore((s) => s.user);
+
+  const { data: profile } = useQuery({
+    queryKey: ['patient', 'profile', user?.id],
+    queryFn: () => patientApi.getProfile(),
+    enabled: !!user?.id,
+  });
   const { data: upcomingData, isLoading: isLoadingUpcoming } = useQuery({
     queryKey: ['patient', 'appointments', 'upcoming_count'],
     queryFn: () => patientApi.getAppointments({ status: 'scheduled', limit: 1 }),
@@ -31,7 +39,9 @@ export function PatientPortal() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Welcome to your Portal</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+            {profile?.first_name ? `Welcome, ${profile.first_name}` : 'Welcome to your Portal'}
+          </h1>
           <p className="text-muted mt-0.5 text-sm">Here is a summary of your health information.</p>
         </div>
       </div>

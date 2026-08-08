@@ -6,10 +6,12 @@ import { toast } from 'sonner';
 
 import { patientApi } from '@/api/patient';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export function PatientAppointmentsPage() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming');
+  const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null);
 
   const { data: appointments, isLoading, error } = useQuery({
     queryKey: ['patient', 'appointments'],
@@ -21,6 +23,7 @@ export function PatientAppointmentsPage() {
     onSuccess: () => {
       toast.success('Appointment cancelled successfully');
       queryClient.invalidateQueries({ queryKey: ['patient', 'appointments'] });
+      setConfirmCancelId(null);
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to cancel appointment');
@@ -28,9 +31,7 @@ export function PatientAppointmentsPage() {
   });
 
   const handleCancel = (id: number) => {
-    if (confirm('Are you sure you want to cancel this appointment?')) {
-      cancelMutation.mutate(id);
-    }
+    setConfirmCancelId(id);
   };
 
   const filteredAppointments = (appointments as any)?.data?.filter((apt: any) => {
@@ -44,7 +45,7 @@ export function PatientAppointmentsPage() {
   }).sort((a: any, b: any) => dayjs(b.appointment_date).diff(dayjs(a.appointment_date))) || [];
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">My Appointments</h1>
@@ -86,7 +87,7 @@ export function PatientAppointmentsPage() {
         <div className="space-y-3">
           {filteredAppointments.length > 0 ? (
             filteredAppointments.map((apt: any) => (
-              <div key={apt.id} className="bg-surface rounded-xl p-4 shadow-sm border border-border-light flex flex-col md:flex-row gap-4 md:items-center justify-between hover:border-secondary/30 transition-colors group">
+              <div key={apt.appointment_id} className="bg-surface rounded-xl p-4 shadow-sm border border-border-light flex flex-col md:flex-row gap-4 md:items-center justify-between hover:border-secondary/30 transition-colors group">
                 
                 <div className="flex gap-4">
                   <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10 border border-secondary/20 group-hover:scale-105 transition-transform">
@@ -126,7 +127,7 @@ export function PatientAppointmentsPage() {
                       variant="outline" 
                       size="sm"
                       className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 rounded-lg h-9 px-4"
-                      onClick={() => handleCancel(apt.id)}
+                      onClick={() => handleCancel(apt.appointment_id)}
                       disabled={cancelMutation.isPending}
                     >
                       Cancel
@@ -145,6 +146,17 @@ export function PatientAppointmentsPage() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmCancelId !== null}
+        onOpenChange={(open) => !open && setConfirmCancelId(null)}
+        title="Cancel Appointment"
+        description="Are you sure you want to cancel this appointment?"
+        confirmText="Cancel Appointment"
+        variant="destructive"
+        onConfirm={() => confirmCancelId && cancelMutation.mutate(confirmCancelId)}
+        isPending={cancelMutation.isPending}
+      />
     </div>
   );
 }
