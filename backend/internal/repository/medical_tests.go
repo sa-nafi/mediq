@@ -76,6 +76,8 @@ func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, fil
 	baseQuery := `
 		FROM Medical_Tests t
 		JOIN Patients p ON t.patient_id = p.patient_id
+		LEFT JOIN Doctors d ON t.doctor_id = d.doctor_id
+		LEFT JOIN Employees e ON d.employee_id = e.employee_id
 		WHERE 1=1
 	`
 	args := []interface{}{}
@@ -129,8 +131,8 @@ func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, fil
 		return nil, 0, fmt.Errorf("failed to count tests: %w", err)
 	}
 
-	query := `SELECT t.test_id, t.patient_id, t.test_name, t.status, t.ordered_date, p.first_name, p.last_name ` + baseQuery
-	query += fmt.Sprintf(" ORDER BY t.ordered_date DESC, t.test_id DESC LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
+	query := `SELECT t.test_id, t.patient_id, t.test_name, t.status, t.ordered_date, p.first_name, p.last_name, e.first_name, e.last_name ` + baseQuery
+	query += fmt.Sprintf(" ORDER BY t.ordered_date ASC, t.test_id ASC LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
 	args = append(args, limit, offset)
 
 	rows, err := tx.Query(ctx, query, args...)
@@ -150,6 +152,8 @@ func (r *MedicalTestRepository) GetTests(ctx context.Context, status string, fil
 			&t.OrderedDate,
 			&t.PatientFirstName,
 			&t.PatientLastName,
+			&t.DoctorFirstName,
+			&t.DoctorLastName,
 		); err != nil {
 			return nil, 0, fmt.Errorf("failed to scan test summary: %w", err)
 		}
@@ -207,7 +211,7 @@ func (r *MedicalTestRepository) GetTestByID(ctx context.Context, testID int) (*m
 }
 
 // UpdateTest allows lab techs to complete or update a test result via raw SQL.
-func (r *MedicalTestRepository) UpdateTest(ctx context.Context, testID int, result string, labTechUserID int) error {
+func (r *MedicalTestRepository) UpdateTest(ctx context.Context, testID int, status string, result string, labTechUserID int) error {
 	tx := db.TxFromContext(ctx)
 	if tx == nil {
 		return errors.New("transaction not found in context")
@@ -224,15 +228,33 @@ func (r *MedicalTestRepository) UpdateTest(ctx context.Context, testID int, resu
 	}
 
 	// 2. Perform raw update
-	query := `
-		UPDATE Medical_Tests 
-		SET result = $1, 
-		    status = 'completed', 
-		    completed_date = CURRENT_DATE, 
-		    performed_by = $2 
-		WHERE test_id = $3 AND status != 'cancelled'
-	`
-	cmdTag, err := tx.Exec(ctx, query, result, employeeID, testID)
+	var query string
+	var args []interface{}
+	
+	switch status {
+	case "completed":
+		query = `
+			UPDATE Medical_Tests 
+			SET result = $1, 
+			    status = 'completed', 
+			    completed_date = CURRENT_DATE, 
+			    performed_by = $2 
+			WHERE test_id = $3 AND status != 'cancelled'
+		`
+		args = []interface{}{result, employeeID, testID}
+	case "in_progress":
+		query = `
+			UPDATE Medical_Tests 
+			SET status = 'in_progress', 
+			    performed_by = $1 
+			WHERE test_id = $2 AND status != 'cancelled'
+		`
+		args = []interface{}{employeeID, testID}
+	default:
+		return fmt.Errorf("unsupported status update: %s", status)
+	}
+
+	cmdTag, err := tx.Exec(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed to update test: %w", err)
 	}

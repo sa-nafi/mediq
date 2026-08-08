@@ -100,11 +100,18 @@ export function ReceptionistQueuePage() {
                         {apt.patient?.first_name} {apt.patient?.last_name}
                       </span>
                       <span className={`flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded border ${
-                        apt.status === 'in_queue' 
-                          ? 'text-indigo-700 bg-indigo-50 border-indigo-200' 
-                          : 'text-blue-700 bg-blue-50 border-blue-200'
+                        apt.status === 'completed' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' :
+                        apt.status === 'in_queue' ? 'text-indigo-700 bg-indigo-50 border-indigo-200' : 
+                        apt.status === 'no_show' ? 'text-amber-700 bg-amber-50 border-amber-200' :
+                        apt.status === 'cancelled' ? 'text-red-700 bg-red-50 border-red-200' :
+                        'text-blue-700 bg-blue-50 border-blue-200'
                       }`}>
-                        {apt.status === 'in_queue' ? 'In Queue' : 'Scheduled'}
+                        {apt.status === 'completed' && <CheckCircle className="h-3 w-3" />}
+                        {apt.status === 'completed' ? 'Completed' :
+                         apt.status === 'in_queue' ? 'In Queue' : 
+                         apt.status === 'no_show' ? 'No-Show' :
+                         apt.status === 'cancelled' ? 'Cancelled' :
+                         'Scheduled'}
                       </span>
                       {index === 0 && (
                         <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-white bg-emerald-500 px-2 py-0.5 rounded shadow-sm">
