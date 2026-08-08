@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/sa-nafi/mediq/backend/internal/middleware"
 	"github.com/sa-nafi/mediq/backend/internal/repository"
 	"github.com/sa-nafi/mediq/backend/internal/utils"
 )
@@ -17,6 +18,28 @@ type EmployeeHandler struct {
 
 func NewEmployeeHandler(repo *repository.EmployeeRepository) *EmployeeHandler {
 	return &EmployeeHandler{repo: repo}
+}
+
+// GetMyEmployeeProfileHandler handles GET /api/employees/me
+func (h *EmployeeHandler) GetMyEmployeeProfileHandler(w http.ResponseWriter, r *http.Request) {
+	userIDObj := r.Context().Value(middleware.UserIDKey)
+	userID, ok := userIDObj.(int)
+	if !ok {
+		utils.WriteError(w, http.StatusInternalServerError, "invalid user ID type in context")
+		return
+	}
+
+	employee, err := h.repo.GetEmployeeByUserID(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, utils.ErrNotFound) {
+			utils.WriteError(w, http.StatusNotFound, "Employee profile not found")
+			return
+		}
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve employee profile")
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, employee)
 }
 
 type CreateStaffRequest struct {

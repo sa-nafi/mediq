@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/sa-nafi/mediq/backend/internal/db"
 	"github.com/sa-nafi/mediq/backend/internal/models"
@@ -139,6 +140,34 @@ func (r *EmployeeRepository) GetEmployeeByID(ctx context.Context, employeeID int
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get employee: %w", err)
+	}
+	return &emp, nil
+}
+
+func (r *EmployeeRepository) GetEmployeeByUserID(ctx context.Context, userID int) (*models.Employee, error) {
+	tx := db.TxFromContext(ctx)
+	if tx == nil {
+		return nil, errors.New("transaction not found in context")
+	}
+
+	var emp models.Employee
+	err := tx.QueryRow(ctx, `
+		SELECT 
+			e.employee_id, u.user_id, u.public_id, u.email, u.role, u.is_active,
+			e.department_id, d.department_name, e.first_name, e.last_name, e.phone, e.hire_date
+		FROM Employees e
+		JOIN Users u ON e.user_id = u.user_id
+		LEFT JOIN Departments d ON e.department_id = d.department_id
+		WHERE u.user_id = $1
+	`, userID).Scan(
+		&emp.EmployeeID, &emp.UserID, &emp.PublicID, &emp.Email, &emp.Role, &emp.IsActive,
+		&emp.DepartmentID, &emp.DepartmentName, &emp.FirstName, &emp.LastName, &emp.Phone, &emp.HireDate,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, utils.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get employee by user id: %w", err)
 	}
 	return &emp, nil
 }

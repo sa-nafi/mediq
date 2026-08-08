@@ -5,9 +5,11 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/sa-nafi/mediq/backend/internal/middleware"
+	"github.com/sa-nafi/mediq/backend/internal/models"
 	"github.com/sa-nafi/mediq/backend/internal/repository"
 	"github.com/sa-nafi/mediq/backend/internal/utils"
 )
@@ -202,5 +204,64 @@ func (h *PatientHandler) UpdatePatientHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "Patient updated successfully"})
+	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
+		"message": "Patient updated successfully",
+	})
+}
+
+type CreateWalkInPatientRequest struct {
+	FirstName   string  `json:"first_name"`
+	LastName    string  `json:"last_name"`
+	DateOfBirth string  `json:"date_of_birth"` // YYYY-MM-DD
+	Gender      *string `json:"gender,omitempty"`
+	BloodType   *string `json:"blood_type,omitempty"`
+	Phone       *string `json:"phone,omitempty"`
+	Address     *string `json:"address,omitempty"`
+}
+
+// CreateWalkInPatientHandler handles POST /api/patients/walk-in for receptionists
+func (h *PatientHandler) CreateWalkInPatientHandler(w http.ResponseWriter, r *http.Request) {
+	var req CreateWalkInPatientRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if req.FirstName == "" || req.LastName == "" || req.DateOfBirth == "" {
+		utils.WriteError(w, http.StatusBadRequest, "first_name, last_name, and date_of_birth are required")
+		return
+	}
+
+	dob, err := time.Parse("2006-01-02", req.DateOfBirth)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid date format for date_of_birth. Use YYYY-MM-DD")
+		return
+	}
+
+	patient := &models.Patient{
+		FirstName:   req.FirstName,
+		LastName:    req.LastName,
+		DateOfBirth: dob,
+		Gender:      req.Gender,
+		BloodType:   req.BloodType,
+		Phone:       req.Phone,
+		Address:     req.Address,
+	}
+
+	patientID, err := h.repo.CreateWalkInPatient(r.Context(), patient)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Failed to create walk-in patient")
+		return
+	}
+
+	createdPatient, err := h.repo.GetPatientByID(r.Context(), patientID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, "Patient created but failed to retrieve details")
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, map[string]interface{}{
+		"message": "Walk-in patient created successfully",
+		"patient": createdPatient,
+	})
 }

@@ -76,6 +76,41 @@ func (r *PatientRepository) RegisterPatient(
 	return nil
 }
 
+// CreateWalkInPatient creates a new guest patient without an associated User record.
+func (r *PatientRepository) CreateWalkInPatient(
+	ctx context.Context,
+	patient *models.Patient,
+) (int, error) {
+	tx := db.TxFromContext(ctx)
+	if tx == nil {
+		return 0, errors.New("no database transaction found in context")
+	}
+
+	var patientID int
+	query := `
+		INSERT INTO Patients (
+			first_name, last_name, date_of_birth, gender, blood_type, phone, address
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7
+		) RETURNING patient_id
+	`
+	err := tx.QueryRow(ctx, query,
+		patient.FirstName,
+		patient.LastName,
+		patient.DateOfBirth,
+		patient.Gender,
+		patient.BloodType,
+		patient.Phone,
+		patient.Address,
+	).Scan(&patientID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return patientID, nil
+}
+
 // GetAllPatients retrieves a list of all patients with pagination.
 // If searchQuery is provided, it filters by first_name, last_name, or phone.
 func (r *PatientRepository) GetAllPatients(ctx context.Context, searchQuery string, limit, offset int) ([]models.Patient, int, error) {
