@@ -45,8 +45,8 @@ func (r *AppointmentRepository) CancelAppointment(ctx context.Context, appointme
 	return err
 }
 
-// GetAppointments gets all appointments, optionally filtering by role, user ID, status, and sort order.
-func (r *AppointmentRepository) GetAppointments(ctx context.Context, role string, userID int, status, sort string, limit, offset int) ([]models.Appointment, int, error) {
+// GetAppointments gets all appointments, optionally filtering by role, user ID, status, sort order, patient name, doctor name, and date.
+func (r *AppointmentRepository) GetAppointments(ctx context.Context, role string, userID int, status, sort, patientName, doctorName, date string, limit, offset int) ([]models.Appointment, int, error) {
 	tx := db.TxFromContext(ctx)
 	if tx == nil {
 		return nil, 0, errors.New("no database transaction found in context")
@@ -72,6 +72,21 @@ func (r *AppointmentRepository) GetAppointments(ctx context.Context, role string
 	if status != "" {
 		args = append(args, status)
 		baseQuery += ` AND a.status = $` + strconv.Itoa(len(args))
+	}
+
+	if patientName != "" {
+		args = append(args, "%"+patientName+"%")
+		baseQuery += ` AND (p.first_name ILIKE $` + strconv.Itoa(len(args)) + ` OR p.last_name ILIKE $` + strconv.Itoa(len(args)) + `)`
+	}
+
+	if doctorName != "" {
+		args = append(args, "%"+doctorName+"%")
+		baseQuery += ` AND (e.first_name ILIKE $` + strconv.Itoa(len(args)) + ` OR e.last_name ILIKE $` + strconv.Itoa(len(args)) + `)`
+	}
+
+	if date != "" {
+		args = append(args, date)
+		baseQuery += ` AND a.appointment_date = $` + strconv.Itoa(len(args))
 	}
 
 	var totalCount int

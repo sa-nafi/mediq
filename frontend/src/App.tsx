@@ -19,15 +19,24 @@ import { AboutPage } from '@/pages/AboutPage';
 
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { PatientLayout } from '@/layouts/PatientLayout';
-import { PatientPortal } from '@/pages/PatientPortal';
+import { PatientDashboard } from '@/pages/patient/Dashboard';
 import { PatientDoctorsPage } from '@/pages/patient/DoctorsPage';
 import { BookAppointmentPage } from '@/pages/patient/BookAppointmentPage';
-import { PatientAppointmentsPage } from '@/pages/patient/AppointmentsPage';
+import { PatientAppointmentsPage } from '@/pages/patient/Appointments';
 import { PatientProfilePage } from '@/pages/patient/ProfilePage';
 import { PatientMedicalRecordsPage } from '@/pages/patient/MedicalRecordsPage';
 import { PatientPrescriptionsPage } from '@/pages/patient/PrescriptionsPage';
 import { PatientTestsPage } from '@/pages/patient/MedicalTestsPage';
 import { StaffPortal } from '@/pages/StaffPortal';
+
+import { ReceptionistLayout } from '@/layouts/ReceptionistLayout';
+import { ReceptionistDashboard } from '@/pages/receptionist/Dashboard';
+import { ReceptionistAppointmentsPage } from '@/pages/receptionist/Appointments';
+import { ReceptionistPatientsPage } from '@/pages/receptionist/Patients';
+import { ReceptionistQueuePage } from '@/pages/receptionist/Queue';
+import { ReceptionistProfilePage } from '@/pages/receptionist/ProfilePage';
+import { ReceptionistDoctorsPage } from '@/pages/receptionist/DoctorsPage';
+import { ReceptionistBookAppointmentPage } from '@/pages/receptionist/BookAppointmentPage';
 
 export default function App() {
   const { init, isInitialized } = useAuthStore();
@@ -69,7 +78,7 @@ export default function App() {
           {/* Patient Routes - Protected */}
           <Route element={<ProtectedRoute allowedRoles={['patient']} />}>
             <Route element={<PatientLayout />}>
-              <Route path="/patient" element={<PatientPortal />} />
+              <Route path="/patient" element={<PatientDashboard />} />
               <Route path="/patient/doctors" element={<PatientDoctorsPage />} />
               <Route path="/patient/book/:id" element={<BookAppointmentPage />} />
               <Route path="/patient/appointments" element={<PatientAppointmentsPage />} />
@@ -83,6 +92,19 @@ export default function App() {
           {/* Staff Routes - Protected */}
           <Route element={<ProtectedRoute allowedRoles={['admin', 'doctor', 'receptionist', 'lab_tech']} />}>
             <Route path="/staff" element={<StaffPortal />} />
+          </Route>
+
+          {/* Receptionist Routes - Protected */}
+          <Route element={<ProtectedRoute allowedRoles={['receptionist', 'admin']} />}>
+            <Route element={<ReceptionistLayout />}>
+              <Route path="/receptionist" element={<ReceptionistDashboard />} />
+              <Route path="/receptionist/appointments" element={<ReceptionistAppointmentsPage />} />
+              <Route path="/receptionist/patients" element={<ReceptionistPatientsPage />} />
+              <Route path="/receptionist/queue" element={<ReceptionistQueuePage />} />
+              <Route path="/receptionist/profile" element={<ReceptionistProfilePage />} />
+              <Route path="/receptionist/doctors" element={<ReceptionistDoctorsPage />} />
+              <Route path="/receptionist/book/:id" element={<ReceptionistBookAppointmentPage />} />
+            </Route>
           </Route>
 
           {/* Fallback */}

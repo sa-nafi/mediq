@@ -83,6 +83,49 @@ func (h *AppointmentHandler) CreateAppointmentHandler(w http.ResponseWriter, r *
 	})
 }
 
+type createReceptionistAppointmentRequest struct {
+	PatientID       int    `json:"patient_id"`
+	DoctorID        int    `json:"doctor_id"`
+	AppointmentDate string `json:"appointment_date"` // YYYY-MM-DD format
+	Type            string `json:"type"`
+}
+
+// CreateReceptionistAppointmentHandler handles POST /api/appointments/book-for-patient
+func (h *AppointmentHandler) CreateReceptionistAppointmentHandler(w http.ResponseWriter, r *http.Request) {
+	var req createReceptionistAppointmentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	if req.DoctorID == 0 || req.PatientID == 0 {
+		utils.WriteError(w, http.StatusBadRequest, "Doctor ID and Patient ID are required")
+		return
+	}
+
+	date, err := time.Parse("2006-01-02", req.AppointmentDate)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid date format, expected YYYY-MM-DD")
+		return
+	}
+
+	if req.Type != string(models.TypeNew) && req.Type != string(models.TypeFollowUp) && req.Type != string(models.TypeReport) {
+		utils.WriteError(w, http.StatusBadRequest, "Invalid appointment type. Must be 'new', 'follow-up', or 'report'")
+		return
+	}
+
+	appointmentID, err := h.repo.BookAppointment(r.Context(), req.PatientID, req.DoctorID, date, req.Type)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, map[string]interface{}{
+		"appointment_id": appointmentID,
+		"message":        "Appointment booked successfully",
+	})
+}
+
 // GetAppointmentsHandler handles GET /api/appointments
 func (h *AppointmentHandler) GetAppointmentsHandler(w http.ResponseWriter, r *http.Request) {
 	roleObj := r.Context().Value(middleware.RoleKey)
@@ -98,8 +141,11 @@ func (h *AppointmentHandler) GetAppointmentsHandler(w http.ResponseWriter, r *ht
 	page, limit, offset := utils.ParsePaginationParams(r)
 	status := r.URL.Query().Get("status")
 	sort := r.URL.Query().Get("sort")
+	patientName := r.URL.Query().Get("patient_name")
+	doctorName := r.URL.Query().Get("doctor_name")
+	date := r.URL.Query().Get("date")
 
-	appointments, totalCount, err := h.repo.GetAppointments(r.Context(), role, userID, status, sort, limit, offset)
+	appointments, totalCount, err := h.repo.GetAppointments(r.Context(), role, userID, status, sort, patientName, doctorName, date, limit, offset)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve appointments")
 		return

@@ -63,6 +63,7 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	mux.Handle("POST /api/auth/logout", authMw(txMw(http.HandlerFunc(authHandler.LogoutHandler))))
 
 	// Employee Routes
+	mux.Handle("GET /api/employees/me", allow("doctor", "receptionist", "lab_tech", "admin")(employeeHandler.GetMyEmployeeProfileHandler))
 	mux.Handle("POST /api/employees", allow("admin")(employeeHandler.CreateStaffHandler))
 	mux.Handle("GET /api/employees", allow("admin")(employeeHandler.GetEmployeesHandler))
 	mux.Handle("GET /api/employees/{id}", allow("admin")(employeeHandler.GetEmployeeByIDHandler))
@@ -104,12 +105,14 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	mux.Handle("PUT /api/patients/me", allow("patient")(patientHandler.UpdateMyPatientProfileHandler))
 	mux.Handle("GET /api/patients", allow("receptionist", "doctor", "admin")(patientHandler.GetPatientsHandler))
 	mux.Handle("GET /api/patients/{id}", allow("patient", "doctor", "receptionist", "admin")(patientHandler.GetPatientByIDHandler))
+	mux.Handle("POST /api/patients/walk-in", allow("receptionist", "admin")(patientHandler.CreateWalkInPatientHandler))
 	mux.Handle("PUT /api/patients/{id}", allow("patient", "admin")(patientHandler.UpdatePatientHandler))
 
 	// Appointment Routes
 	mux.Handle("POST /api/appointments", allow("patient")(appointmentHandler.CreateAppointmentHandler))
 	mux.Handle("GET /api/appointments", allow("patient", "doctor", "receptionist", "admin")(appointmentHandler.GetAppointmentsHandler))
 	mux.Handle("GET /api/appointments/{id}", allow("patient", "doctor", "receptionist", "admin")(appointmentHandler.GetAppointmentByIDHandler))
+	mux.Handle("POST /api/appointments/book-for-patient", allow("receptionist", "admin")(appointmentHandler.CreateReceptionistAppointmentHandler))
 	mux.Handle("PUT /api/appointments/{id}/cancel", allow("patient", "receptionist", "admin")(appointmentHandler.CancelAppointmentHandler))
 	mux.Handle("PATCH /api/appointments/{id}/status", allow("doctor", "receptionist")(appointmentHandler.UpdateAppointmentStatusHandler))
 

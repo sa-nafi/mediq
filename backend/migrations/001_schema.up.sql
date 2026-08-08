@@ -48,7 +48,7 @@ CREATE TABLE Employees (
 -- ---------------------------------------------------------------------
 CREATE TABLE Patients (
     patient_id      SERIAL PRIMARY KEY,
-    user_id         INT NOT NULL UNIQUE REFERENCES Users(user_id) ON DELETE CASCADE,
+    user_id         INT UNIQUE REFERENCES Users(user_id) ON DELETE CASCADE,
     first_name      VARCHAR(60) NOT NULL,
     last_name       VARCHAR(60) NOT NULL,
     date_of_birth   DATE NOT NULL,

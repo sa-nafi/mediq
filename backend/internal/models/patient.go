@@ -6,7 +6,7 @@ import "time"
 // It maps to the "patients" database table.
 type Patient struct {
 	ID          int       `json:"id"`
-	UserID      int       `json:"-"` // Internal FK to users table
+	UserID      *int      `json:"-"` // Internal FK to users table
 	FirstName   string    `json:"first_name"`
 	LastName    string    `json:"last_name"`
 	DateOfBirth time.Time `json:"date_of_birth"`

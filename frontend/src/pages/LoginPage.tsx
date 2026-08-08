@@ -55,6 +55,8 @@ export function LoginPage() {
         } else {
           if (user?.role === 'patient') {
             navigate('/patient', { replace: true });
+          } else if (user?.role === 'receptionist') {
+            navigate('/receptionist', { replace: true });
           } else {
             navigate('/staff', { replace: true });
           }
@@ -68,7 +70,7 @@ export function LoginPage() {
   };
 
   if (isInitialized && user) {
-    const from = (location.state as any)?.from?.pathname || (user.role === 'patient' ? '/patient' : '/staff');
+    const from = (location.state as any)?.from?.pathname || (user.role === 'patient' ? '/patient' : user.role === 'receptionist' ? '/receptionist' : '/staff');
     return <Navigate to={from} replace />;
   }
 
