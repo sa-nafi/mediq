@@ -47,6 +47,10 @@ import { DoctorMedicalRecordsPage } from '@/pages/doctor/MedicalRecordsPage';
 import { DoctorMedicalTestsPage } from '@/pages/doctor/MedicalTestsPage';
 import { DoctorProfilePage } from '@/pages/doctor/ProfilePage';
 
+import { LabTechLayout } from '@/layouts/LabTechLayout';
+import { LabTechDashboard } from '@/pages/lab-tech/Dashboard';
+import { LabTechProfilePage } from '@/pages/lab-tech/ProfilePage';
+
 
 export default function App() {
   const { init, isInitialized } = useAuthStore();
@@ -127,6 +131,14 @@ export default function App() {
               <Route path="/doctor/medical-records" element={<DoctorMedicalRecordsPage />} />
               <Route path="/doctor/medical-tests" element={<DoctorMedicalTestsPage />} />
               <Route path="/doctor/profile" element={<DoctorProfilePage />} />
+            </Route>
+          </Route>
+
+          {/* Lab Tech Routes - Protected */}
+          <Route element={<ProtectedRoute allowedRoles={['lab_tech', 'admin']} />}>
+            <Route element={<LabTechLayout />}>
+              <Route path="/lab-tech" element={<LabTechDashboard />} />
+              <Route path="/lab-tech/profile" element={<LabTechProfilePage />} />
             </Route>
           </Route>
 

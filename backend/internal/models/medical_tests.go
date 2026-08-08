@@ -27,6 +27,8 @@ type MedicalTestSummary struct {
 	OrderedDate      time.Time `json:"ordered_date"`
 	PatientFirstName string    `json:"patient_first_name"`
 	PatientLastName  string    `json:"patient_last_name"`
+	DoctorFirstName  *string   `json:"doctor_first_name"`
+	DoctorLastName   *string   `json:"doctor_last_name"`
 }
 
 type MedicalTestOrderRequest struct {
@@ -38,4 +40,5 @@ type MedicalTestOrderRequest struct {
 
 type MedicalTestResultRequest struct {
 	Result string `json:"result"`
+	Status string `json:"status"`
 }

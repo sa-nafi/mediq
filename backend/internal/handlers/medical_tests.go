@@ -146,12 +146,12 @@ func (h *MedicalTestHandler) UpdateMedicalTestHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	if req.Result == "" {
-		utils.WriteError(w, http.StatusBadRequest, "result is required")
+	if req.Status == "completed" && req.Result == "" {
+		utils.WriteError(w, http.StatusBadRequest, "result is required when completing a test")
 		return
 	}
 
-	err = h.repo.UpdateTest(r.Context(), testID, req.Result, userID)
+	err = h.repo.UpdateTest(r.Context(), testID, req.Status, req.Result, userID)
 	if err != nil {
 		if errors.Is(err, utils.ErrNotFound) {
 			utils.WriteError(w, http.StatusNotFound, "Test not found")
