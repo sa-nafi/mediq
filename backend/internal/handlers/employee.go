@@ -142,8 +142,8 @@ func (h *EmployeeHandler) GetEmployeeByIDHandler(w http.ResponseWriter, r *http.
 
 type UpdateEmployeeRequest struct {
 	DepartmentID *int    `json:"department_id"`
-	FirstName    string  `json:"first_name"`
-	LastName     string  `json:"last_name"`
+	FirstName    *string `json:"first_name"`
+	LastName     *string `json:"last_name"`
 	Phone        *string `json:"phone"`
 }
 

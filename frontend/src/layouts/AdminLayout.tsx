@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
-  Calendar, 
-  Users, 
-  ListOrdered,
+  FileSearch,
+  Users,
+  Stethoscope,
+  Contact2,
+  Microscope,
   LogOut,
   Menu,
   X,
-  User,
-  Stethoscope
+  User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,15 +21,15 @@ import { cn } from '@/lib/utils';
 import logoSrc from '@/assets/logo.png';
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/receptionist' },
-  { icon: Calendar, label: 'Appointments', href: '/receptionist/appointments' },
-  { icon: Stethoscope, label: 'Find Doctor', href: '/receptionist/doctors' },
-  { icon: Users, label: 'Patients', href: '/receptionist/patients' },
-  { icon: ListOrdered, label: 'Queue', href: '/receptionist/queue' },
-  { icon: User, label: 'My Profile', href: '/receptionist/profile' },
+  { icon: FileSearch, label: 'Audit Logs', href: '/admin' },
+  { icon: Users, label: 'Patients', href: '/admin/patients' },
+  { icon: Stethoscope, label: 'Doctors', href: '/admin/doctors' },
+  { icon: Contact2, label: 'Receptionists', href: '/admin/receptionists' },
+  { icon: Microscope, label: 'Lab Techs', href: '/admin/lab-techs' },
+  { icon: User, label: 'My Profile', href: '/admin/profile' },
 ];
 
-export function ReceptionistLayout() {
+export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { clearAuth } = useAuthStore();
   const navigate = useNavigate();
@@ -53,7 +53,7 @@ export function ReceptionistLayout() {
           <img src={logoSrc} alt="Noor Healthcare Logo" className="h-9 w-9 object-contain" />
           <div className="flex flex-col items-start leading-[1.1]">
             <span className="text-[20px] font-bold text-primary tracking-tight">Noor</span>
-            <span className="text-[12px] font-bold text-secondary uppercase tracking-wider">Reception</span>
+            <span className="text-[12px] font-bold text-secondary uppercase tracking-wider">Admin</span>
           </div>
         </div>
       </div>
@@ -64,7 +64,7 @@ export function ReceptionistLayout() {
             <NavLink
               key={item.href}
               to={item.href}
-              end={item.href === '/receptionist'}
+              end={item.href === '/admin'}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) => cn(
                 "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors",
@@ -98,7 +98,7 @@ export function ReceptionistLayout() {
       <header className="md:hidden flex h-16 items-center justify-between border-b border-border-light bg-surface px-4 sticky top-0 z-30">
         <div className="flex items-center gap-2">
           <img src={logoSrc} alt="Logo" className="h-8 w-8" />
-          <span className="font-bold text-primary">Reception Portal</span>
+          <span className="font-bold text-primary">Admin Portal</span>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
           <Menu className="h-5 w-5" />

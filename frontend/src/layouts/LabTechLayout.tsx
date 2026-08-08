@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAuthStore } from '@/store/auth-store';
 import { authApi } from '@/api/auth';
+import { queryClient } from '@/lib/query-client';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import logoSrc from '@/assets/logo.png';
@@ -31,6 +32,7 @@ export function LabTechLayout() {
     } catch (e) {
       console.error('Logout failed', e);
     } finally {
+      queryClient.clear();
       clearAuth();
       navigate('/login');
     }

@@ -63,8 +63,10 @@ export function LoginPage() {
             navigate('/doctor', { replace: true });
           } else if (user?.role === 'lab_tech') {
             navigate('/lab-tech', { replace: true });
+          } else if (user?.role === 'admin') {
+            navigate('/admin', { replace: true });
           } else {
-            navigate('/staff', { replace: true });
+            navigate('/', { replace: true });
           }
         }
       }
@@ -80,7 +82,7 @@ export function LoginPage() {
     if (from === '/staff') from = null;
     
     if (!from) {
-      from = user.role === 'patient' ? '/patient' : user.role === 'receptionist' ? '/receptionist' : user.role === 'doctor' ? '/doctor' : user.role === 'lab_tech' ? '/lab-tech' : '/staff';
+      from = user.role === 'patient' ? '/patient' : user.role === 'receptionist' ? '/receptionist' : user.role === 'doctor' ? '/doctor' : user.role === 'lab_tech' ? '/lab-tech' : user.role === 'admin' ? '/admin' : '/';
     }
     return <Navigate to={from} replace />;
   }

@@ -250,10 +250,13 @@ func (r *PatientRepository) GetPatientByID(ctx context.Context, patientID int) (
 
 // UpdatePatientParams holds the parameters for updating a patient's details.
 type UpdatePatientParams struct {
-	FirstName *string
-	LastName  *string
-	Phone     *string
-	Address   *string
+	FirstName   *string
+	LastName    *string
+	Phone       *string
+	Address     *string
+	DateOfBirth *string
+	Gender      *string
+	BloodType   *string
 }
 
 // UpdatePatient updates a patient's details.
@@ -269,10 +272,13 @@ func (r *PatientRepository) UpdatePatient(ctx context.Context, patientID int, pa
 			first_name = COALESCE($2, first_name),
 			last_name = COALESCE($3, last_name),
 			phone = COALESCE($4, phone),
-			address = COALESCE($5, address)
+			address = COALESCE($5, address),
+			date_of_birth = COALESCE($6, date_of_birth),
+			gender = COALESCE($7, gender),
+			blood_type = COALESCE($8, blood_type)
 		WHERE patient_id = $1
 	`
-	commandTag, err := tx.Exec(ctx, query, patientID, params.FirstName, params.LastName, params.Phone, params.Address)
+	commandTag, err := tx.Exec(ctx, query, patientID, params.FirstName, params.LastName, params.Phone, params.Address, params.DateOfBirth, params.Gender, params.BloodType)
 	if err != nil {
 		return err
 	}

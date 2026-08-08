@@ -9,7 +9,7 @@ import (
 // Employee represents an employee (e.g. lab_tech, receptionist, admin).
 // It contains joined data from Users, Employees, and Departments tables.
 type Employee struct {
-	EmployeeID     int       `json:"-"`
+	EmployeeID     int       `json:"employee_id"`
 	UserID         int       `json:"-"`
 	PublicID       uuid.UUID `json:"id"`
 	Email          string    `json:"email"`

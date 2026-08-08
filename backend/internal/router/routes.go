@@ -105,32 +105,32 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 	mux.Handle("PUT /api/patients/me", allow("patient")(patientHandler.UpdateMyPatientProfileHandler))
 	mux.Handle("GET /api/patients", allow("receptionist", "doctor", "admin")(patientHandler.GetPatientsHandler))
 	mux.Handle("GET /api/patients/{id}", allow("patient", "doctor", "receptionist", "admin")(patientHandler.GetPatientByIDHandler))
-	mux.Handle("POST /api/patients/walk-in", allow("receptionist", "admin")(patientHandler.CreateWalkInPatientHandler))
+	mux.Handle("POST /api/patients/walk-in", allow("receptionist")(patientHandler.CreateWalkInPatientHandler))
 	mux.Handle("PUT /api/patients/{id}", allow("patient", "admin")(patientHandler.UpdatePatientHandler))
 
 	// Appointment Routes
 	mux.Handle("POST /api/appointments", allow("patient")(appointmentHandler.CreateAppointmentHandler))
-	mux.Handle("GET /api/appointments", allow("patient", "doctor", "receptionist", "admin")(appointmentHandler.GetAppointmentsHandler))
-	mux.Handle("GET /api/appointments/{id}", allow("patient", "doctor", "receptionist", "admin")(appointmentHandler.GetAppointmentByIDHandler))
-	mux.Handle("POST /api/appointments/book-for-patient", allow("receptionist", "admin")(appointmentHandler.CreateReceptionistAppointmentHandler))
-	mux.Handle("PUT /api/appointments/{id}/cancel", allow("patient", "receptionist", "admin")(appointmentHandler.CancelAppointmentHandler))
+	mux.Handle("GET /api/appointments", allow("patient", "doctor", "receptionist")(appointmentHandler.GetAppointmentsHandler))
+	mux.Handle("GET /api/appointments/{id}", allow("patient", "doctor", "receptionist")(appointmentHandler.GetAppointmentByIDHandler))
+	mux.Handle("POST /api/appointments/book-for-patient", allow("receptionist")(appointmentHandler.CreateReceptionistAppointmentHandler))
+	mux.Handle("PUT /api/appointments/{id}/cancel", allow("patient", "receptionist")(appointmentHandler.CancelAppointmentHandler))
 	mux.Handle("PATCH /api/appointments/{id}/status", allow("doctor", "receptionist")(appointmentHandler.UpdateAppointmentStatusHandler))
 
 	// Medical Record Routes
 	mux.Handle("POST /api/medical-records", allow("doctor")(medicalRecordHandler.CreateMedicalRecordHandler))
-	mux.Handle("GET /api/medical-records", allow("patient", "doctor", "admin")(medicalRecordHandler.GetMedicalRecordsHandler))
-	mux.Handle("GET /api/medical-records/{id}", allow("patient", "doctor", "admin")(medicalRecordHandler.GetMedicalRecordByIDHandler))
+	mux.Handle("GET /api/medical-records", allow("patient", "doctor")(medicalRecordHandler.GetMedicalRecordsHandler))
+	mux.Handle("GET /api/medical-records/{id}", allow("patient", "doctor")(medicalRecordHandler.GetMedicalRecordByIDHandler))
 
 	// Medical Test Routes
 	mux.Handle("POST /api/medical-tests", allow("doctor")(medicalTestHandler.OrderMedicalTestHandler))
-	mux.Handle("GET /api/medical-tests", allow("patient", "doctor", "lab_tech", "admin")(medicalTestHandler.GetTestsHandler))
-	mux.Handle("GET /api/medical-tests/{id}", allow("patient", "doctor", "lab_tech", "admin")(medicalTestHandler.GetTestByIDHandler))
+	mux.Handle("GET /api/medical-tests", allow("patient", "doctor", "lab_tech")(medicalTestHandler.GetTestsHandler))
+	mux.Handle("GET /api/medical-tests/{id}", allow("patient", "doctor", "lab_tech")(medicalTestHandler.GetTestByIDHandler))
 	mux.Handle("PUT /api/medical-tests/{id}", allow("lab_tech")(medicalTestHandler.UpdateMedicalTestHandler))
 
 	// Prescription Routes
 	mux.Handle("POST /api/prescriptions", allow("doctor")(prescriptionHandler.CreatePrescriptionHandler))
-	mux.Handle("GET /api/prescriptions", allow("patient", "doctor", "admin")(prescriptionHandler.GetPrescriptionsHandler))
-	mux.Handle("GET /api/prescriptions/{id}", allow("patient", "doctor", "admin")(prescriptionHandler.GetPrescriptionByIDHandler))
+	mux.Handle("GET /api/prescriptions", allow("patient", "doctor")(prescriptionHandler.GetPrescriptionsHandler))
+	mux.Handle("GET /api/prescriptions/{id}", allow("patient", "doctor")(prescriptionHandler.GetPrescriptionByIDHandler))
 
 	// Admin Routes
 	mux.Handle("GET /api/admin/audit-logs", allow("admin")(adminHandler.GetAuditLogsHandler))
