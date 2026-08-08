@@ -126,7 +126,7 @@ func (r *PrescriptionRepository) GetPrescriptionByID(ctx context.Context, id int
 }
 
 // GetPrescriptions retrieves a summary list of prescriptions, optionally filtered.
-func (r *PrescriptionRepository) GetPrescriptions(ctx context.Context, filterUserID, filterPatientID, filterDoctorID *int, limit, offset int) ([]models.PrescriptionSummary, int, error) {
+func (r *PrescriptionRepository) GetPrescriptions(ctx context.Context, role string, userID int, filterPatientID *int, consultationApptID *int, limit, offset int) ([]models.PrescriptionSummary, int, error) {
 	tx := db.TxFromContext(ctx)
 
 	baseQuery := `
@@ -140,19 +140,38 @@ func (r *PrescriptionRepository) GetPrescriptions(ctx context.Context, filterUse
 	args := []interface{}{}
 	argIndex := 1
 
-	if filterUserID != nil {
+	switch role {
+	case "patient":
 		baseQuery += fmt.Sprintf(" AND p.user_id = $%d", argIndex)
-		args = append(args, *filterUserID)
+		args = append(args, userID)
 		argIndex++
+	case "doctor":
+		hasConsultationAccess := false
+		if consultationApptID != nil && filterPatientID != nil {
+			var exists bool
+			verifyQuery := `
+				SELECT EXISTS(
+					SELECT 1 FROM Appointments a
+					JOIN Doctors d ON a.doctor_id = d.doctor_id
+					JOIN Employees e ON d.employee_id = e.employee_id
+					WHERE a.appointment_id = $1 AND a.patient_id = $2 AND e.user_id = $3
+				)
+			`
+			if err := tx.QueryRow(ctx, verifyQuery, *consultationApptID, *filterPatientID, userID).Scan(&exists); err == nil && exists {
+				hasConsultationAccess = true
+			}
+		}
+
+		if !hasConsultationAccess {
+			baseQuery += fmt.Sprintf(" AND pr.doctor_id = (SELECT doctor_id FROM Doctors JOIN Employees emp ON Doctors.employee_id = emp.employee_id WHERE emp.user_id = $%d)", argIndex)
+			args = append(args, userID)
+			argIndex++
+		}
 	}
+
 	if filterPatientID != nil {
 		baseQuery += fmt.Sprintf(" AND p.patient_id = $%d", argIndex)
 		args = append(args, *filterPatientID)
-		argIndex++
-	}
-	if filterDoctorID != nil {
-		baseQuery += fmt.Sprintf(" AND pr.doctor_id = $%d", argIndex)
-		args = append(args, *filterDoctorID)
 		argIndex++
 	}
 

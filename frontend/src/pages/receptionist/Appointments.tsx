@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { Calendar, Clock, XCircle, CheckCircle, Clock3, AlertTriangle } from 'lucide-react';
+import { Calendar, Clock, XCircle, CheckCircle, Clock3, AlertTriangle, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { receptionistApi } from '@/api/receptionist';
@@ -11,7 +11,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 
 export function ReceptionistAppointmentsPage() {
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'all'>('scheduled');
+  const [filter, setFilter] = useState<'scheduled' | 'completed' | 'cancelled' | 'no_show' | 'in_queue' | 'all'>('scheduled');
   const [page, setPage] = useState(1);
   const [patientName, setPatientName] = useState('');
   const [doctorName, setDoctorName] = useState('');
@@ -72,6 +72,8 @@ export function ReceptionistAppointmentsPage() {
     switch (status) {
       case 'scheduled':
         return <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200"><Clock3 className="w-3 h-3" /> Scheduled</span>;
+      case 'in_queue':
+        return <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200"><LogIn className="w-3 h-3" /> In Queue</span>;
       case 'completed':
         return <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"><CheckCircle className="w-3 h-3" /> Completed</span>;
       case 'cancelled':
@@ -93,13 +95,13 @@ export function ReceptionistAppointmentsPage() {
       </div>
 
       <div className="flex flex-wrap gap-2 bg-surface p-1 rounded-xl w-fit border border-border-light shadow-sm">
-        {['scheduled', 'completed', 'cancelled', 'no_show', 'all'].map((f) => (
+        {['scheduled', 'in_queue', 'completed', 'cancelled', 'no_show', 'all'].map((f) => (
           <button
             key={f}
             onClick={() => { setFilter(f as any); setPage(1); }}
             className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all capitalize ${filter === f ? 'bg-secondary text-white shadow-sm' : 'text-muted hover:text-foreground'}`}
           >
-            {f.replace('_', '-')}
+            {f.replace('_', ' ')}
           </button>
         ))}
       </div>
@@ -179,6 +181,16 @@ export function ReceptionistAppointmentsPage() {
                 <div className="flex gap-2 shrink-0">
                   {apt.status === 'scheduled' && (
                     <>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg h-9 px-3"
+                        onClick={() => handleStatusChange(apt.appointment_id, 'in_queue')}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        <LogIn className="w-3.5 h-3.5 mr-1.5" />
+                        Check In
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"

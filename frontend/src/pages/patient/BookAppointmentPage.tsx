@@ -16,6 +16,7 @@ export function BookAppointmentPage() {
 
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [appointmentType, setAppointmentType] = useState('new');
+  const [notes, setNotes] = useState('');
   
   // Fetch doctors to get doctor details
   const { data: doctors } = useQuery({
@@ -56,6 +57,7 @@ export function BookAppointmentPage() {
       doctor_id: doctorId,
       appointment_date: selectedDate,
       type: appointmentType,
+      notes: notes,
     });
   };
 
@@ -188,6 +190,19 @@ export function BookAppointmentPage() {
               </label>
             ))}
           </div>
+        </section>
+
+        {/* Step 4: Additional Notes */}
+        <section>
+          <h2 className="text-lg font-bold text-primary mb-4 flex items-center gap-2">
+            4. Additional Notes
+          </h2>
+          <textarea
+            className="w-full bg-background rounded-xl border border-input px-4 py-3 focus:outline-none focus:ring-2 focus:ring-secondary min-h-[100px]"
+            placeholder="Any specific symptoms or reasons for your visit? (Optional)"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          ></textarea>
         </section>
 
         <hr className="border-border-light" />

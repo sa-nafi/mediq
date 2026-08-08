@@ -104,7 +104,7 @@ CREATE TABLE Appointments (
     appointment_date    DATE NOT NULL,
     serial_number       INT NOT NULL,
     status              VARCHAR(20) NOT NULL DEFAULT 'scheduled'
-                           CHECK (status IN ('scheduled','completed','cancelled','no_show')),
+                           CHECK (status IN ('scheduled','completed','cancelled','no_show','in_queue')),
     type                VARCHAR(20) NOT NULL CHECK (type IN ('new','follow-up','report')),
     notes               TEXT,
     created_at          TIMESTAMP NOT NULL DEFAULT now(),

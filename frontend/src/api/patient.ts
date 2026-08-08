@@ -11,7 +11,7 @@ export const patientApi = {
     const res = await apiClient.get(`/appointments/${id}`);
     return res.data;
   },
-  bookAppointment: async (data: { doctor_id: number; appointment_date: string; type: string }) => {
+  bookAppointment: async (data: { doctor_id: number; appointment_date: string; type: string; notes?: string }) => {
     const res = await apiClient.post('/appointments', data);
     return res.data;
   },

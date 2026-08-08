@@ -36,7 +36,7 @@ export function PatientAppointmentsPage() {
 
   const filteredAppointments = (appointments as any)?.data?.filter((apt: any) => {
     if (filter === 'upcoming') {
-      return apt.status === 'scheduled' && dayjs(apt.appointment_date).isAfter(dayjs().subtract(1, 'day'));
+      return (apt.status === 'scheduled' || apt.status === 'in_queue') && dayjs(apt.appointment_date).isAfter(dayjs().subtract(1, 'day'));
     }
     if (filter === 'past') {
       return apt.status === 'completed' || apt.status === 'cancelled' || dayjs(apt.appointment_date).isBefore(dayjs(), 'day');
@@ -98,6 +98,7 @@ export function PatientAppointmentsPage() {
                       <span className="text-base font-bold text-foreground">Dr. {apt.doctor?.first_name} {apt.doctor?.last_name}</span>
                       
                       {apt.status === 'scheduled' && <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200"><Clock3 className="w-3 h-3"/> Scheduled</span>}
+                      {apt.status === 'in_queue' && <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200"><Clock3 className="w-3 h-3 animate-pulse"/> In Queue</span>}
                       {apt.status === 'completed' && <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"><CheckCircle className="w-3 h-3"/> Completed</span>}
                       {apt.status === 'cancelled' && <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-200"><XCircle className="w-3 h-3"/> Cancelled</span>}
                     </div>

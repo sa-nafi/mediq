@@ -91,28 +91,23 @@ func (h *PrescriptionHandler) GetPrescriptionsHandler(w http.ResponseWriter, r *
 	userID, _ := r.Context().Value(middleware.UserIDKey).(int)
 	role, _ := r.Context().Value(middleware.RoleKey).(string)
 
-	var filterUserID *int
 	var filterPatientID *int
-	var filterDoctorID *int
-
-	if role == "patient" {
-		filterUserID = &userID
-	} else {
-		if pidStr := r.URL.Query().Get("patient_id"); pidStr != "" {
-			if pid, err := strconv.Atoi(pidStr); err == nil {
-				filterPatientID = &pid
-			}
-		}
-		if didStr := r.URL.Query().Get("doctor_id"); didStr != "" {
-			if did, err := strconv.Atoi(didStr); err == nil {
-				filterDoctorID = &did
-			}
+	if pidStr := r.URL.Query().Get("patient_id"); pidStr != "" {
+		if pid, err := strconv.Atoi(pidStr); err == nil {
+			filterPatientID = &pid
 		}
 	}
 
 	page, limit, offset := utils.ParsePaginationParams(r)
+	
+	var consultationApptID *int
+	if apptStr := r.URL.Query().Get("consultation_appointment_id"); apptStr != "" {
+		if apptID, err := strconv.Atoi(apptStr); err == nil {
+			consultationApptID = &apptID
+		}
+	}
 
-	summaries, totalCount, err := h.repo.GetPrescriptions(r.Context(), filterUserID, filterPatientID, filterDoctorID, limit, offset)
+	summaries, totalCount, err := h.repo.GetPrescriptions(r.Context(), role, userID, filterPatientID, consultationApptID, limit, offset)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve prescriptions")
 		return

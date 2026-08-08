@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/sa-nafi/mediq/backend/internal/db"
@@ -18,15 +19,15 @@ func NewAppointmentRepository() *AppointmentRepository {
 }
 
 // BookAppointment books an appointment by calling the stored procedure.
-func (r *AppointmentRepository) BookAppointment(ctx context.Context, patientID, doctorID int, date time.Time, appointmentType string) (int, error) {
+func (r *AppointmentRepository) BookAppointment(ctx context.Context, patientID, doctorID int, date time.Time, appointmentType string, status string, notes string) (int, error) {
 	tx := db.TxFromContext(ctx)
 	if tx == nil {
 		return 0, errors.New("no database transaction found in context")
 	}
 
 	var appointmentID int
-	query := `SELECT book_appointment($1, $2, $3, $4)`
-	err := tx.QueryRow(ctx, query, patientID, doctorID, date, appointmentType).Scan(&appointmentID)
+	query := `SELECT book_appointment($1, $2, $3, $4, $5, $6)`
+	err := tx.QueryRow(ctx, query, patientID, doctorID, date, appointmentType, status, notes).Scan(&appointmentID)
 	if err != nil {
 		return 0, err
 	}
@@ -59,19 +60,30 @@ func (r *AppointmentRepository) GetAppointments(ctx context.Context, role string
 	`
 	args := []interface{}{}
 
-	if role == "patient" {
+	switch role {
+	case "patient":
 		baseQuery += ` WHERE a.patient_id = (SELECT patient_id FROM Patients WHERE user_id = $1)`
 		args = append(args, userID)
-	} else if role == "doctor" {
+	case "doctor":
 		baseQuery += ` WHERE a.doctor_id = (SELECT doctor_id FROM Doctors JOIN Employees emp ON Doctors.employee_id = emp.employee_id WHERE emp.user_id = $1)`
 		args = append(args, userID)
-	} else {
+	default:
 		baseQuery += ` WHERE 1=1`
 	}
 
 	if status != "" {
-		args = append(args, status)
-		baseQuery += ` AND a.status = $` + strconv.Itoa(len(args))
+		statuses := strings.Split(status, ",")
+		if len(statuses) == 1 {
+			args = append(args, status)
+			baseQuery += ` AND a.status = $` + strconv.Itoa(len(args))
+		} else {
+			var placeholders []string
+			for _, s := range statuses {
+				args = append(args, s)
+				placeholders = append(placeholders, "$"+strconv.Itoa(len(args)))
+			}
+			baseQuery += ` AND a.status IN (` + strings.Join(placeholders, ", ") + `)`
+		}
 	}
 
 	if patientName != "" {

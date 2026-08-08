@@ -2,16 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { User, Shield, Briefcase, Mail, Phone } from 'lucide-react';
 import dayjs from 'dayjs';
 
-import { useAuthStore } from '@/store/auth-store';
-import { receptionistApi } from '@/api/receptionist';
+import { doctorApi } from '@/api/doctor';
 
-export function ReceptionistProfilePage() {
-  const user = useAuthStore((s) => s.user);
-
+export function DoctorProfilePage() {
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['employee', 'profile', user?.id],
-    queryFn: () => receptionistApi.getProfile(),
-    enabled: !!user?.id,
+    queryKey: ['doctor', 'profile'],
+    queryFn: doctorApi.getProfile,
   });
 
   if (isLoading) {
@@ -42,7 +38,7 @@ export function ReceptionistProfilePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">My Profile</h1>
-          <p className="text-muted mt-0.5 text-sm">View your personal and staff information.</p>
+          <p className="text-muted mt-0.5 text-sm">View your personal and professional details.</p>
         </div>
       </div>
 
@@ -64,11 +60,11 @@ export function ReceptionistProfilePage() {
             
             <div className="text-center sm:text-left flex-1 pb-1">
               <h2 className="text-2xl font-extrabold text-foreground tracking-tight">
-                {profile.first_name} {profile.last_name}
+                Dr. {profile.first_name} {profile.last_name}
               </h2>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-secondary/10 text-secondary font-semibold text-xs border border-secondary/20 capitalize">
-                  {profile.role}
+                  {profile.role.replace('_', ' ')}
                 </span>
               </div>
             </div>
@@ -125,7 +121,7 @@ export function ReceptionistProfilePage() {
                 <InfoCard 
                   icon={<Shield className="h-4 w-4" />} 
                   label="System Role" 
-                  value={profile.role} 
+                  value={profile.role.replace('_', ' ')} 
                   readOnly
                   colorClass="text-pink-600 bg-pink-50 border-pink-100" 
                   className="capitalize"
@@ -166,4 +162,3 @@ function InfoCard({ icon, label, value, readOnly, colorClass, className = '' }: 
     </div>
   );
 }
-

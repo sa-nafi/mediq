@@ -65,12 +65,26 @@ func (h *MedicalTestHandler) OrderMedicalTestHandler(w http.ResponseWriter, r *h
 func (h *MedicalTestHandler) GetTestsHandler(w http.ResponseWriter, r *http.Request) {
 	status := r.URL.Query().Get("status")
 
+	var filterPatientID *int
+	if pidStr := r.URL.Query().Get("patient_id"); pidStr != "" {
+		if pid, err := strconv.Atoi(pidStr); err == nil {
+			filterPatientID = &pid
+		}
+	}
+
 	page, limit, offset := utils.ParsePaginationParams(r)
 
 	role, _ := r.Context().Value(middleware.RoleKey).(string)
 	userID, _ := r.Context().Value(middleware.UserIDKey).(int)
+	
+	var consultationApptID *int
+	if apptStr := r.URL.Query().Get("consultation_appointment_id"); apptStr != "" {
+		if apptID, err := strconv.Atoi(apptStr); err == nil {
+			consultationApptID = &apptID
+		}
+	}
 
-	tests, totalCount, err := h.repo.GetTests(r.Context(), status, role, userID, offset, limit)
+	tests, totalCount, err := h.repo.GetTests(r.Context(), status, filterPatientID, role, userID, consultationApptID, offset, limit)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, "Failed to retrieve tests")
 		return
