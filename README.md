@@ -51,3 +51,23 @@ MediQ - A Healthcare Facility Information System built with React, Go, and Postg
    npm run dev
    ```
    The frontend will typically be accessible at `http://localhost:5173`.
+
+## Docker Compose Setup (For Demonstration Only)
+
+You can run the entire system (Database, Backend API, Frontend SPA) with a single command using Docker Compose. The setup automatically creates the database, applies all schema migrations, populates test accounts, and serves the frontend on port `5173`.
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+
+### Instructions
+
+1. From the root directory of the project, run:
+   ```bash
+   docker compose up --build
+   ```
+
+2. Open your web browser to **`http://localhost:5173`**.
+
+The database test accounts (admin, doctors, staff, patients) are automatically seeded. All default passwords are `test1234`.
+
+*To wipe the database and start fresh, run: `docker compose down -v`*
