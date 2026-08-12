@@ -30,7 +30,10 @@ COPY --from=builder /app/migrations ./migrations
 
 # Copy the entrypoint script
 COPY entrypoint.sh .
+
+# Fix permission and line ending
 RUN chmod +x entrypoint.sh
+RUN sed -i 's/\r$//' entrypoint.sh
 
 EXPOSE 8080
 
