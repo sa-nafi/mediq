@@ -1,12 +1,9 @@
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Star, MapPin, Calendar, Clock, Award, ShieldCheck } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAppointmentStore } from '@/store/appointment-store';
 import { doctors } from '@/data/doctors';
 
 export function DoctorDetailsPage() {
   const { id } = useParams();
-  const openModal = useAppointmentStore((s) => s.openModal);
   
   const doctor = doctors.find(d => d.id === id);
 
@@ -30,29 +27,31 @@ export function DoctorDetailsPage() {
           <ArrowLeft className="h-4 w-4" /> Back to doctors
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
           
           {/* Left Column - Profile Card */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 text-center sticky top-28">
-              <div className="w-40 h-40 mx-auto rounded-full bg-gradient-to-br from-[#f8fbfa] to-gray-100 border-4 border-white shadow-md mb-6 overflow-hidden flex items-center justify-center">
-                 <img src={doctor.image} alt={doctor.name} className="w-full h-full object-cover" />
-              </div>
-              
-              <h1 className="text-2xl font-bold text-[#1a3a40] mb-1">{doctor.name}</h1>
-              <p className="text-[#358797] font-medium mb-4">{doctor.specialtyName}</p>
-              
-              <div className="flex items-center justify-center gap-1 mb-6">
-                {[1,2,3,4,5].map(i => (
-                  <Star key={i} className={`h-4 w-4 ${i <= Math.floor(doctor.rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} />
-                ))}
-                <span className="ml-2 text-sm font-bold text-gray-700">{doctor.rating}</span>
-                <span className="text-xs text-gray-400">({doctor.reviews} reviews)</span>
+          <div className="lg:col-span-1 flex flex-col">
+            <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 text-center flex-1 flex flex-col gap-6 lg:justify-between">
+              <div>
+                <div className="w-40 h-40 mx-auto rounded-full bg-gradient-to-br from-[#f8fbfa] to-gray-100 border-4 border-white shadow-md mb-6 overflow-hidden flex items-center justify-center">
+                   <img src={doctor.image} alt={doctor.name} className="w-full h-full object-cover" />
+                </div>
+                
+                <h1 className="text-2xl font-bold text-[#1a3a40] mb-1">{doctor.name}</h1>
+                <p className="text-[#358797] font-medium mb-4">{doctor.specialtyName}</p>
+                
+                <div className="flex items-center justify-center gap-1 mb-6">
+                  {[1,2,3,4,5].map(i => (
+                    <Star key={i} className={`h-4 w-4 ${i <= Math.floor(doctor.rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`} />
+                  ))}
+                  <span className="ml-2 text-sm font-bold text-gray-700">{doctor.rating}</span>
+                  <span className="text-xs text-gray-400">({doctor.reviews} reviews)</span>
+                </div>
+
+                <div className="w-full h-px bg-gray-100 mb-6"></div>
               </div>
 
-              <div className="w-full h-px bg-gray-100 mb-6"></div>
-
-              <div className="space-y-4 text-left mb-8">
+              <div className="space-y-4 text-left">
                 <div className="flex items-start gap-3">
                   <div className="bg-blue-50 p-2 rounded-lg text-blue-600 mt-0.5">
                     <Award className="h-4 w-4" />
@@ -73,24 +72,20 @@ export function DoctorDetailsPage() {
                   </div>
                 </div>
               </div>
-
-              <Button onClick={openModal} className="w-full bg-[#358797] hover:bg-[#2a6d7a] text-white rounded-xl py-6 text-base shadow-md">
-                Book Appointment
-              </Button>
             </div>
           </div>
 
           {/* Right Column - Details */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 flex flex-col gap-6">
             
-            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex-1 flex flex-col justify-start">
               <h2 className="text-xl font-bold text-[#1a3a40] mb-4">About Doctor</h2>
               <p className="text-gray-600 leading-relaxed">
                 {doctor.about}
               </p>
             </div>
 
-            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex-1 flex flex-col justify-start">
               <h2 className="text-xl font-bold text-[#1a3a40] mb-6">Location & Availability</h2>
               
               <div className="flex items-start gap-4 mb-6">

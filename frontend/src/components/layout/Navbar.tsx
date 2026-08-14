@@ -4,7 +4,6 @@ import { Menu, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { useAppointmentStore } from '@/store/appointment-store';
 import { cn } from '@/lib/utils';
 import logoSrc from '@/assets/logo.png';
 
@@ -19,7 +18,6 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const openModal = useAppointmentStore((s) => s.openModal);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -94,20 +92,19 @@ export function Navbar() {
             <span>EN</span>
           </button>
           <Link to="/login">
-            <Button variant="ghost" size="sm">
+            <Button variant="accent" size="default">
               Login
             </Button>
           </Link>
-          <Button variant="accent" size="default" onClick={openModal}>
-            Book Appointment
-          </Button>
         </div>
 
         {/* Mobile Menu */}
         <div className="flex items-center gap-2 lg:hidden">
-          <Button variant="accent" size="sm" onClick={openModal} className="hidden sm:inline-flex">
-            Book Now
-          </Button>
+          <Link to="/login">
+            <Button variant="accent" size="sm">
+              Login
+            </Button>
+          </Link>
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Open menu">
@@ -145,20 +142,10 @@ export function Navbar() {
                 </AnimatePresence>
                 <hr className="my-4 border-border-light" />
                 <Link to="/login" onClick={() => setMobileOpen(false)}>
-                  <Button variant="outline" className="w-full">
+                  <Button variant="accent" className="w-full">
                     Login
                   </Button>
                 </Link>
-                <Button
-                  variant="accent"
-                  className="w-full mt-2"
-                  onClick={() => {
-                    setMobileOpen(false);
-                    openModal();
-                  }}
-                >
-                  Book Appointment
-                </Button>
               </div>
             </SheetContent>
           </Sheet>

@@ -49,8 +49,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
         const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
         get().setAccessToken(data.access_token);
-      } catch (e) {
-        // Refresh failed, user is not authenticated
+      } catch (error) {
+        console.error('Session refresh failed:', error);
         get().clearAuth();
       } finally {
         set({ isInitialized: true });

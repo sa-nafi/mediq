@@ -4,7 +4,6 @@ import { DiseaseSearch } from '@/components/landing/DiseaseSearch';
 import { WhyChooseUs } from '@/components/landing/WhyChooseUs';
 import { PatientVoices } from '@/components/landing/PatientVoices';
 import { Partners } from '@/components/landing/Partners';
-import { QuickActionsCTA } from '@/components/landing/QuickActionsCTA';
 
 export function LandingPage() {
   return (
@@ -15,7 +14,6 @@ export function LandingPage() {
       <WhyChooseUs />
       <PatientVoices />
       <Partners />
-      <QuickActionsCTA />
     </>
   );
 }

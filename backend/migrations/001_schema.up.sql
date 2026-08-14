@@ -3,6 +3,9 @@
 -- Diagnostic Center Management System — Core Schema
 -- =====================================================================
 
+-- Enable extensions
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- ---------------------------------------------------------------------
 -- USERS  (single login table for all 5 roles)
 -- ---------------------------------------------------------------------
@@ -187,6 +190,16 @@ CREATE TABLE Prescription_Items (
 );
 
 -- ---------------------------------------------------------------------
+-- REFRESH_TOKENS  (JWT session tokens)
+-- ---------------------------------------------------------------------
+CREATE TABLE Refresh_Tokens (
+    token_id    UUID PRIMARY KEY,
+    user_id     INT NOT NULL REFERENCES Users(user_id) ON DELETE CASCADE,
+    expires_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_revoked  BOOLEAN DEFAULT FALSE
+);
+
+-- ---------------------------------------------------------------------
 -- AUDIT_LOG  (generic, populated entirely by triggers — see 004_triggers.sql)
 -- ---------------------------------------------------------------------
 CREATE TABLE Audit_Log (
@@ -218,9 +231,21 @@ CREATE INDEX idx_tests_performed_by        ON Medical_Tests(performed_by);
 CREATE INDEX idx_tests_doctor              ON Medical_Tests(doctor_id);
 CREATE INDEX idx_tests_appt                ON Medical_Tests(appointment_id);
 CREATE INDEX idx_prescription_items_rx     ON Prescription_Items(prescription_id);
+CREATE INDEX idx_prescription_items_medicine ON Prescription_Items(medicine_id);
+CREATE INDEX idx_refresh_tokens_user_id     ON Refresh_Tokens(user_id);
 CREATE INDEX idx_prescriptions_record      ON Prescriptions(record_id);
 CREATE INDEX idx_prescriptions_doctor      ON Prescriptions(doctor_id);
 CREATE INDEX idx_prescriptions_appointment ON Prescriptions(appointment_id);
 CREATE INDEX idx_audit_log_table_record    ON Audit_Log(table_name, record_id);
 CREATE INDEX idx_audit_log_changed_at      ON Audit_Log(changed_at DESC, audit_id DESC);
 CREATE INDEX idx_audit_log_changed_by      ON Audit_Log(changed_by);
+
+-- ---------------------------------------------------------------------
+-- Trigram GIN indexes for fast wildcard ILIKE search
+-- ---------------------------------------------------------------------
+CREATE INDEX idx_medicines_name_trgm       ON Medicines USING GIN (medicine_name gin_trgm_ops);
+CREATE INDEX idx_patients_first_name_trgm  ON Patients USING GIN (first_name gin_trgm_ops);
+CREATE INDEX idx_patients_last_name_trgm   ON Patients USING GIN (last_name gin_trgm_ops);
+CREATE INDEX idx_patients_phone_trgm       ON Patients USING GIN (phone gin_trgm_ops);
+CREATE INDEX idx_employees_first_name_trgm ON Employees USING GIN (first_name gin_trgm_ops);
+CREATE INDEX idx_employees_last_name_trgm  ON Employees USING GIN (last_name gin_trgm_ops);
