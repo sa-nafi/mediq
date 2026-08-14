@@ -261,7 +261,7 @@ Since only patients can self-register, the database starts with **zero admins**.
 #### Seeding Tutorial
 
 ##### Prerequisites
-Ensure your PostgreSQL database is running and all database migrations (`001_schema.sql` through `007_procedures.sql`) have been applied.
+Ensure your PostgreSQL database is running and all database migrations (`001_schema.up.sql` through `004_triggers.up.sql`) have been applied.
 
 ##### Running the Seeder
 
