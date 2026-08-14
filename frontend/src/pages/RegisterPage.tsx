@@ -29,7 +29,6 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const user = useAuthStore((s) => s.user);
   const isInitialized = useAuthStore((s) => s.isInitialized);
 
@@ -45,13 +44,12 @@ export function RegisterPage() {
     try {
       setIsLoading(true);
       const res = await authApi.register(data);
-      if (res.access_token) {
-        setAccessToken(res.access_token);
-        toast.success('Registration successful');
-        navigate('/patient', { replace: true });
+      if (res.message) {
+        toast.success(res.message);
+        navigate('/login');
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to register');
+      toast.error(error.response?.data?.error || 'Failed to register');
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +61,7 @@ export function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
