@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Globe, MessageCircle, Camera, Briefcase, Play, Phone, Mail, MapPin } from 'lucide-react';
 import logoSrc from '@/assets/logo.png';
 
-import { useAppointmentStore } from '@/store/appointment-store';
 const socialLinks = [
   { icon: Globe, label: 'Website', href: '#' },
   { icon: MessageCircle, label: 'Twitter', href: '#' },
@@ -12,8 +11,6 @@ const socialLinks = [
 ] as const;
 
 export function Footer() {
-  const openModal = useAppointmentStore((s) => s.openModal);
-
   return (
     <footer className="bg-primary text-white" role="contentinfo">
       {/* Contact Bar */}
@@ -109,7 +106,7 @@ export function Footer() {
               <h3 className="text-white font-semibold mb-6 text-lg tracking-wide">Medical Services</h3>
               <ul className="space-y-3.5">
                 <li><Link to="/doctors" className="text-sm text-white/70 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm transition-colors duration-200 inline-block">Find a Doctor</Link></li>
-                <li><button onClick={openModal} className="text-sm text-white/70 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm transition-colors duration-200 text-left w-full inline-block">Book Appointment</button></li>
+                <li><Link to="/login" className="text-sm text-white/70 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm transition-colors duration-200 inline-block">Book Appointment</Link></li>
                 <li><Link to="/health-library" className="text-sm text-white/70 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm transition-colors duration-200 inline-block">Health Library</Link></li>
                 <li><Link to="/services" className="text-sm text-white/70 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm transition-colors duration-200 inline-block">Consultancy</Link></li>
                 <li><Link to="/services" className="text-sm text-white/70 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm transition-colors duration-200 inline-block">Medical Tests</Link></li>

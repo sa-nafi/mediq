@@ -1,7 +1,6 @@
 import { useLocation, useOutlet } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { BookAppointmentModal } from '@/features/appointments/components/BookAppointmentModal';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function PublicLayout() {
@@ -24,7 +23,6 @@ export function PublicLayout() {
         </motion.main>
       </AnimatePresence>
       <Footer />
-      <BookAppointmentModal />
     </div>
   );
 }
