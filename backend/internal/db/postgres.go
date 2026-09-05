@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/url"
 
+	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sa-nafi/mediq/backend/internal/config"
@@ -33,6 +34,10 @@ func NewPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
 	poolCfg, err := pgxpool.ParseConfig(connString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse database configuration: %w", err)
+	}
+
+	if cfg.TracingEnabled {
+		poolCfg.ConnConfig.Tracer = otelpgx.NewTracer()
 	}
 
 	slog.Info("Attempting to connect to database",

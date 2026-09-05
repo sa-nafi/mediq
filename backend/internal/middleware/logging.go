@@ -20,12 +20,11 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 				recorder.status = http.StatusInternalServerError
 
 				// Log the panicking request
-				slog.Error("Request panicked",
+				slog.ErrorContext(r.Context(), "Request panicked",
 					slog.String("method", r.Method),
 					slog.String("path", r.URL.RequestURI()),
 					slog.String("remote_addr", r.RemoteAddr),
 					slog.Int("status", recorder.status),
-					// slog.Duration("duration", time.Since(start)),
 					slog.String("duration", time.Since(start).String()),
 					slog.Any("panic_error", err),
 				)
@@ -33,12 +32,11 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			}
 
 			// Normal execution logging
-			slog.Info("Request completed",
+			slog.InfoContext(r.Context(), "Request completed",
 				slog.String("method", r.Method),
 				slog.String("path", r.URL.RequestURI()),
 				slog.String("remote_addr", r.RemoteAddr),
 				slog.Int("status", recorder.status),
-				// slog.Duration("duration", time.Since(start)),
 				slog.String("duration", time.Since(start).String()),
 			)
 		}()

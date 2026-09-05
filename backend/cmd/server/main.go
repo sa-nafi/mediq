@@ -14,11 +14,13 @@ import (
 	"github.com/sa-nafi/mediq/backend/internal/db"
 	"github.com/sa-nafi/mediq/backend/internal/middleware"
 	"github.com/sa-nafi/mediq/backend/internal/router"
+	"github.com/sa-nafi/mediq/backend/internal/telemetry"
 )
 
 func main() {
-	// Initialize structured logging
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	// Initialize base structured logging
+	jsonHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logger := slog.New(telemetry.NewTraceContextHandler(jsonHandler))
 	slog.SetDefault(logger)
 
 	slog.Info("Starting application")
@@ -32,6 +34,20 @@ func main() {
 
 	slog.Info("Loaded configuration", "port", cfg.ServerPort, "db_host", cfg.DBHost, "db_name", cfg.DBName)
 
+	// Initialize OpenTelemetry tracer
+	shutdownTracer, err := telemetry.InitTracer(context.Background(), cfg)
+	if err != nil {
+		slog.Error("Failed to initialize OpenTelemetry tracer", "error", err)
+		os.Exit(1)
+	}
+	defer func() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+		if err := shutdownTracer(shutdownCtx); err != nil {
+			slog.Error("Failed to shutdown tracer cleanly", "error", err)
+		}
+	}()
+
 	// Initialize database pool
 	dbCtx, dbCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer dbCancel()
@@ -42,17 +58,29 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Register DB pool metrics with Prometheus if enabled
+	if cfg.MetricsEnabled {
+		telemetry.RegisterDBPoolMetrics(dbPool)
+	}
+
 	// Initialize router
 	mux := http.NewServeMux()
 
 	// Register routes
 	router.RegisterRoutes(mux, dbPool, cfg)
 
+	// Configure server handler chain: Telemetry -> Logging -> CORS -> Mux
+	handler := middleware.TelemetryMiddleware(
+		middleware.LoggingMiddleware(
+			middleware.CORS(cfg.CORSAllowedOrigin)(mux),
+		),
+	)
+
 	// Configure server
 	addr := ":" + cfg.ServerPort
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           middleware.LoggingMiddleware(middleware.CORS(cfg.CORSAllowedOrigin)(mux)),
+		Handler:           handler,
 		ReadTimeout:       5 * time.Second,
 		ReadHeaderTimeout: 2 * time.Second,
 		WriteTimeout:      10 * time.Second,

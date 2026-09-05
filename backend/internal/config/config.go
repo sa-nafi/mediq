@@ -24,6 +24,12 @@ type Config struct {
 	JWTSecret         string
 	CORSAllowedOrigin string
 	CookieSecure      bool
+	OTLPEndpoint      string
+	OTLPInsecure      bool
+	ServiceName       string
+	Environment       string
+	MetricsEnabled    bool
+	TracingEnabled    bool
 }
 
 // Load loads configuration from environment variables, optionally reading from a .env file first.
@@ -51,6 +57,12 @@ func Load() (*Config, error) {
 		JWTSecret:         getEnv("JWT_SECRET", ""),
 		CORSAllowedOrigin: getEnv("ALLOWED_ORIGIN", "http://localhost:5173"),
 		CookieSecure:      getEnv("COOKIE_SECURE", "false") == "true",
+		OTLPEndpoint:      getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "localhost:4317"),
+		OTLPInsecure:      getEnv("OTEL_EXPORTER_OTLP_INSECURE", "true") == "true",
+		ServiceName:       getEnv("OTEL_SERVICE_NAME", "mediq-backend"),
+		Environment:       getEnv("OTEL_ENVIRONMENT", "development"),
+		MetricsEnabled:    getEnv("METRICS_ENABLED", "true") == "true",
+		TracingEnabled:    getEnv("TRACING_ENABLED", "true") == "true",
 	}
 
 	if err := validate(cfg); err != nil {

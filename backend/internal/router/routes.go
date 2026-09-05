@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sa-nafi/mediq/backend/internal/config"
 	"github.com/sa-nafi/mediq/backend/internal/handlers"
 	"github.com/sa-nafi/mediq/backend/internal/middleware"
@@ -49,6 +50,9 @@ func RegisterRoutes(mux *http.ServeMux, dbPool *pgxpool.Pool, cfg *config.Config
 			return authMw(middleware.RequireRole(roles...)(txMw(http.HandlerFunc(h))))
 		}
 	}
+
+	// Metrics endpoint for Prometheus
+	mux.Handle("GET /metrics", promhttp.Handler())
 
 	// Health and readiness endpoints
 	mux.HandleFunc("GET /api/health", handlers.HealthCheck)
